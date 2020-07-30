@@ -11,6 +11,10 @@ from argparse import ArgumentParser
 from .application.unittestgenerator import watch
 
 
+def display():
+    pass
+
+
 def main(argv=None):
 
     try:

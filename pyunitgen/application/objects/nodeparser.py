@@ -1,8 +1,16 @@
 import ast
+from collections import namedtuple
 import re
 from .nodetype import NodeType, AssertUnitTestCase
 from .templates import Templates
 from faker import Faker
+from .pyunitreport import PyUnitReport, PyUnitReportValidation
+
+Import = namedtuple("Import", ["module", "name", "alias"])
+
+# TODO: When generating the unittest file make sure to compare existing generate unittest
+#      file so you don't overwrite the existing one. When comparing and there are some
+#      missing function or method, just create those missing one.
 
 
 class AstNode:
@@ -20,6 +28,8 @@ class Node:
         self.parent = parent
         self.includeInternal = includeInternal
         self.name = None
+        self.report = PyUnitReportValidation()
+        self.list_import = []
         self.init_children()
 
     def getParentName(self):
@@ -29,12 +39,26 @@ class Node:
         else:
             return self.parent.getName()
 
+    def get_imports(self, node):
+
+        if isinstance(node, ast.Import):
+            module = []
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module.split('.')
+        else:
+            return
+
+        for n in node.names:
+            self.list_import.append(
+                Import(module, n.name.split('.'), n.asname))
+
     def init_children(self):
 
         for child in self.node.body:
             nodeType = type(child)
             node = None
-
+            # print(nodeType)
+            self.get_imports(child)
             if nodeType is ast.ClassDef:
                 if not child.name.startswith('_') or self.includeInternal:
                     node = NodeClass(child, parent=self.node,
@@ -43,8 +67,9 @@ class Node:
                 if not child.name.startswith('_') or self.includeInternal:
                     node = NodeFunction(
                         child, parent=self.node, includeInternal=self.includeInternal)
-
+            self.get_imports(child)
             if node:
+                node.list_import = self.list_import
                 self.list_children.append(node)
 
     def getChildren(self):
@@ -67,7 +92,7 @@ class Node:
         return False
 
     def getUnitTest(self, module=None):
-        pass
+        return None
 
 
 class NodeClass(Node):
@@ -81,9 +106,14 @@ class NodeClass(Node):
             list_method = []
             for method in self.getChildren():
                 # print(method.getName())
-                if method.getName()[0] != '_':
-                    list_method.append(
-                        method.getAssertTest())
+                if method.isFunction():
+                    if method.getName()[0] != '_':
+                        list_method.append(
+                            method.getAssertTest())
+                elif method.isClass():
+                    class_children = method.getUnitTest(module)
+                    if class_children:
+                        list_method.extend(class_children)
 
             methodTests = '\n'.join(list_method)
 
@@ -129,6 +159,23 @@ class NodeFunction(NodeClass):
     def getComment(self):
         return ast.get_docstring(self.node, clean=True)
 
+    def getFunctionType(self, res):
+        _, k, v = res[0]
+        value = v.strip("[ ]",)
+        key = k.strip("{ }")
+        if "," in value:
+            value = value.split(",")
+
+        if key.lower() == "boolean":
+            if value:
+                return True, value
+            return True, None
+
+        if key.lower() == "number":
+            if value:
+                return 1, value
+            return 1, None
+
     def getReturnType(self):
         comment = self.getComment()
         # print(dir(self.node))
@@ -138,33 +185,13 @@ class NodeFunction(NodeClass):
             # print(res)
             if res:
 
-                _, k, v = res[0]
-
-                value = v.strip("[ ]",)
-                key = k.strip("{ }")
-                if "," in value:
-                    value = value.split(",")
-
-                if key.lower() == "boolean":
-                    if value:
-                        return True, value
-                    return True, None
-
-                if key.lower() == "number":
-                    if value:
-                        return 1, value
-                    return 1, None
+                return self.getFunctionType(res)
 
         return None, None
 
     def getParameter(self):
         comment = self.getComment()
         list_param = None
-
-        # m = re.match(r"(?P<first_name>\w+)[ ]+(?P<last_name>\w+)",
-        #              "Malcolm    Reynolds")
-
-        # print(m.groupdict())
 
         if comment:
             res = re.findall(
@@ -179,7 +206,7 @@ class NodeFunction(NodeClass):
 
         r_type, r_value = self.getReturnType()
         list_param = self.getParameter()
-        print(list_param)
+        # print(list_param)
         func_body = None
         faker = Faker()
 

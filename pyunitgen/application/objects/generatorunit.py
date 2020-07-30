@@ -22,12 +22,14 @@
 import ast
 import collections
 import os
+from threading import Thread
 
 from .templates import Templates
 from .nodeparser import NodeFunction, Node
 from .nodetype import NodeType
 from .pyunitfile import PyUnitFile
 from .pyunitreport import PyUnitReport
+from .pyunitexception import PyUnitExceptionNone
 
 
 class Generator:
@@ -41,17 +43,31 @@ class Generator:
         :param fileName: str
         :return: str or None
         """
-        pyunit_source = PyUnitFile(fileName, root)
-        tree = pyunit_source.getSourceTree()
-        module = pyunit_source.getModule()
+        try:
+            pyunit_source = PyUnitFile(fileName, root)
+            tree = pyunit_source.getSourceTree()
+            module = pyunit_source.getModule()
+            # TODO: add the file root and file name to the main node so it can be use as the import path
+            # TODO: Replace all the '/' with '.' and remove the '.py' at the end of the file.
+            # print(fileName)
+            # print(root)
 
-        # Walk the AST
-        node = Node(tree, includeInternal=includeInternal)
-        list_children = node.getChildren()
+            # Walk the AST
+            node = Node(tree, includeInternal=includeInternal)
+            list_children = node.getChildren()
 
-        unitreport = PyUnitReport()
+            unitreport = PyUnitReport()
 
-        while list_children:
-            my_node = list_children.pop(0)
-            unitreport.add(my_node.getUnitTest(module))
-        return str(unitreport)
+            while list_children:
+                my_node = list_children.pop(0)
+
+                generate_unit_test_data = my_node.getUnitTest(module)
+                # print(my_node.getName())
+                # print(my_node.list_import)
+                if generate_unit_test_data:
+                    unitreport.add(generate_unit_test_data)
+
+            return unitreport.getReport()
+        except PyUnitExceptionNone as ex:
+            # print(ex)
+            return None

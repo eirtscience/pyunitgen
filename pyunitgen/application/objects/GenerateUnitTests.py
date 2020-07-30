@@ -24,12 +24,57 @@ from .generatorunit import Generator
 import argparse
 import os
 import sys
+from threading import Thread
 
 import inspect
 _currentFile = os.path.abspath(inspect.getfile(inspect.currentframe()))
 _currentDir = os.path.dirname(_currentFile)
 _parentDir = os.path.dirname(_currentDir)
 sys.path.insert(0, _parentDir)
+
+
+def generate_unittest(root, fileName, arguments, footer, header):
+    unitTest = Generator.generateUnitTest(
+        root, fileName, arguments.internal)
+    if unitTest:
+        # Replace tabs
+        if arguments.tab_width is not None:
+            unitTest = unitTest.replace('\t', ' ' * arguments.tab_width)
+
+        # Add header and footer
+        unitTest = header + unitTest + footer
+
+        # Write it
+        outFile = '%s%s' % (arguments.test_prefix, fileName)
+        outFolder = arguments.test_module
+        if not os.path.exists(outFolder):
+            os.makedirs(outFolder)
+
+        # TODO: do this at every level
+        testInit = os.path.join(outFolder, '__init__.py')
+        if not os.path.exists(testInit):
+            with open(testInit, 'w') as testInitFile:
+                testInitFile.write('')
+
+        outPath = os.path.join(outFolder, outFile)
+        if arguments.force or not os.path.exists(outPath) or os.stat(outPath).st_size == 0:
+            # print('[%s] Writing...' % outPath)
+            with open(outPath, 'w') as outFile:
+                outFile.write(unitTest)
+        else:
+            print('[%s] Already exists' % outPath)
+
+
+def generate_unittest_for(fileNames, arguments, root, footer, header):
+    for fileName in fileNames:
+        # Skip ignored directories
+        _, childDirectory = os.path.split(root)
+        if childDirectory in arguments.exclude:
+            continue
+
+        unittest_thread = Thread(target=generate_unittest, args=(
+            root, fileName, arguments, footer, header))
+        unittest_thread.start()
 
 
 def main(arguments):
@@ -45,43 +90,10 @@ def main(arguments):
 
     # Walk the directory finding Python files
     for root, _, fileNames in os.walk(arguments.module):
-        for fileName in fileNames:
-            # Skip ignored directories
-            _, childDirectory = os.path.split(root)
-            if childDirectory in arguments.exclude:
-                continue
-
-            # Generate unit test, skipping ignored files
-            unitTest = Generator.generateUnitTest(
-                root, fileName, arguments.internal)
-            if unitTest is None:
-                continue
-
-            # Replace tabs
-            if arguments.tab_width is not None:
-                unitTest = unitTest.replace('\t', ' ' * arguments.tab_width)
-
-            # Add header and footer
-            unitTest = header + unitTest + footer
-
-            # Write it
-            outFile = '%s%s' % (arguments.test_prefix, fileName)
-            outFolder = arguments.test_module
-            if not os.path.exists(outFolder):
-                os.makedirs(outFolder)
-
-            # TODO: do this at every level
-            testInit = os.path.join(outFolder, '__init__.py')
-            if not os.path.exists(testInit):
-                with open(testInit, 'w') as testInitFile:
-                    testInitFile.write('')
-
-            outPath = os.path.join(outFolder, outFile)
-            if arguments.force or not os.path.exists(outPath) or os.stat(outPath).st_size == 0:
-                # print('[%s] Writing...' % outPath)
-                with open(outPath, 'w') as outFile:
-                    outFile.write(unitTest)
-            else:
-                print('[%s] Already exists' % outPath)
+        if "__pycache__" not in root:
+            # print(fileNames)
+            unittest_thread = Thread(target=generate_unittest_for, args=(
+                fileNames, arguments, root, footer, header))
+            unittest_thread.start()
 
     return 0
