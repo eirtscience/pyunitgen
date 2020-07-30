@@ -1,4 +1,4 @@
-
+from pyunitgen.application.objects.generatorunit import Generator
 import unittest
 
 		
@@ -22,7 +22,7 @@ class GeneratorTest(unittest.TestCase):
 			pass #TODO
 	
 		def test_generateUnitTest(self):
-				
+			
       generator=Generator.generateUnitTest()
 			
       self.assertIsNone(generator) 

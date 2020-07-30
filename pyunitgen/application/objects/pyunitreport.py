@@ -10,11 +10,11 @@ class PyUnitReport(list):
     def add(self, value):
         self.append(value)
 
-    def getReport(self):
+    def getReport(self, import_path=None):
         if len(self) > 0:
             unitTestsStr = '\n\n'.join(
                 unitTest for unitTest in self if unitTest != '')
-            return Templates.unitTestBase % unitTestsStr
+            return Templates.unitTestBase.format(import_path, unitTestsStr)
         return None
 
 

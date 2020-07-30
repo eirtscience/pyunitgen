@@ -1,10 +1,10 @@
-
+from pyunitgen.application.objects.GenerateUnitTests import generate_unittest,generate_unittest_for,main
 import unittest
 
 		
 class GenerateUnitTestsTest(unittest.TestCase):
 		"""
-		Tests for functions in the GenerateUnitTests module.
+		Tests for methods in the None class.
 		"""
 
 		@classmethod
@@ -23,59 +23,19 @@ class GenerateUnitTestsTest(unittest.TestCase):
 	
 		def test_generate_unittest(self):
 			
-      raise NotImplementedError() #TODO: test generate_unittest
-		
+      generateunittests = generate_unittest() 
+			
+      self.assertIsNone(generateunittests) 
 
-
-
-class GenerateUnitTestsTest(unittest.TestCase):
-		"""
-		Tests for functions in the GenerateUnitTests module.
-		"""
-
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
-
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
-
-		def setUp(self):
-			pass #TODO
-
-		def tearDown(self):
-			pass #TODO
-	
 		def test_generate_unittest_for(self):
 			
-      raise NotImplementedError() #TODO: test generate_unittest_for
-		
+      generateunittests = generate_unittest_for() 
+			
+      self.assertIsNone(generateunittests) 
 
-
-
-class GenerateUnitTestsTest(unittest.TestCase):
-		"""
-		Tests for functions in the GenerateUnitTests module.
-		"""
-
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
-
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
-
-		def setUp(self):
-			pass #TODO
-
-		def tearDown(self):
-			pass #TODO
-	
 		def test_main(self):
 			
-      raise NotImplementedError() #TODO: test main
-		
-
+      generateunittests = main() 
+			
+      self.assertIsNone(generateunittests) 
 		

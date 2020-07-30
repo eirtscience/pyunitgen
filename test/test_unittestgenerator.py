@@ -1,10 +1,10 @@
-
+from pyunitgen.application.unittestgenerator import checksum,filesum,watch
 import unittest
 
 		
 class unittestgeneratorTest(unittest.TestCase):
 		"""
-		Tests for functions in the unittestgenerator module.
+		Tests for methods in the None class.
 		"""
 
 		@classmethod
@@ -23,59 +23,19 @@ class unittestgeneratorTest(unittest.TestCase):
 	
 		def test_checksum(self):
 			
-      raise NotImplementedError() #TODO: test checksum
-		
+      unittestgenerator = checksum() 
+			
+      self.assertIsNone(unittestgenerator) 
 
-
-
-class unittestgeneratorTest(unittest.TestCase):
-		"""
-		Tests for functions in the unittestgenerator module.
-		"""
-
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
-
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
-
-		def setUp(self):
-			pass #TODO
-
-		def tearDown(self):
-			pass #TODO
-	
 		def test_filesum(self):
 			
-      raise NotImplementedError() #TODO: test filesum
-		
+      unittestgenerator = filesum() 
+			
+      self.assertIsNone(unittestgenerator) 
 
-
-
-class unittestgeneratorTest(unittest.TestCase):
-		"""
-		Tests for functions in the unittestgenerator module.
-		"""
-
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
-
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
-
-		def setUp(self):
-			pass #TODO
-
-		def tearDown(self):
-			pass #TODO
-	
 		def test_watch(self):
 			
-      raise NotImplementedError() #TODO: test watch
-		
-
+      unittestgenerator = watch() 
+			
+      self.assertIsNone(unittestgenerator) 
 		

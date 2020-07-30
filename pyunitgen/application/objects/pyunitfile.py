@@ -9,10 +9,14 @@ class PyUnitFile:
     def __init__(self, fileName, root):
         self.fileName = fileName
         self.root = root
+        self.path = None
         self.module = None
 
     def getModule(self):
         return self.module
+
+    def getPath(self):
+        return "from "+self.path.replace("/", ".").rstrip(".py")
 
     def getSourceTree(self):
        # Skip non-Python files
@@ -24,6 +28,7 @@ class PyUnitFile:
         if os.path.islink(path):
             print('Symlink: %s' % path)
             raise PyUnitExceptionNone
+        self.path = path
 
         # Get the parts of the filename
         pathParts = os.path.split(path)

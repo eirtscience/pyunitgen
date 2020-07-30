@@ -29,7 +29,10 @@ class Node:
         self.includeInternal = includeInternal
         self.name = None
         self.report = PyUnitReportValidation()
+        self.module_name = None
         self.list_import = []
+        self.node_module = []
+        self.has_class = False
         self.init_children()
 
     def getParentName(self):
@@ -37,6 +40,8 @@ class Node:
             if hasattr(self.parent, "name"):
                 return self.parent.name
         else:
+            if self.parent == None or self.parent.getName() == None:
+                return self.parent.module_name
             return self.parent.getName()
 
     def get_imports(self, node):
@@ -61,12 +66,18 @@ class Node:
             self.get_imports(child)
             if nodeType is ast.ClassDef:
                 if not child.name.startswith('_') or self.includeInternal:
-                    node = NodeClass(child, parent=self.node,
+                    node = NodeClass(child, parent=self,
                                      includeInternal=self.includeInternal)
+                    self.node_module.append(node.getName())
+                    self.has_class = True
             elif nodeType is ast.FunctionDef:
                 if not child.name.startswith('_') or self.includeInternal:
                     node = NodeFunction(
-                        child, parent=self.node, includeInternal=self.includeInternal)
+                        child, parent=self, includeInternal=self.includeInternal)
+                    if self.parent == None:
+                        # print(child.name)
+                        self.node_module.append(node.getName())
+
             self.get_imports(child)
             if node:
                 node.list_import = self.list_import
@@ -92,7 +103,20 @@ class Node:
         return False
 
     def getUnitTest(self, module=None):
-        return None
+        if self.hasChildren():
+            classTestComment = 'Tests for methods in the %s class.' % self.getName()
+            list_method = []
+            for method in self.getChildren():
+                if method.isFunction():
+                    if method.getName()[0] != '_':
+                        list_method.append(method.getFuncAssertTest())
+
+            methodTests = '\n'.join(list_method)
+
+            return Templates.classTest % (
+                module, classTestComment,
+                methodTests,
+            )
 
 
 class NodeClass(Node):
@@ -105,7 +129,6 @@ class NodeClass(Node):
             classTestComment = 'Tests for methods in the %s class.' % self.getName()
             list_method = []
             for method in self.getChildren():
-                # print(method.getName())
                 if method.isFunction():
                     if method.getName()[0] != '_':
                         list_method.append(
@@ -142,12 +165,19 @@ class NodeFunction(NodeClass):
                 yield deco
         return None
 
+    def getFuncUnitTest(self, module):
+        functionTests = Templates.functionTest.format(
+            self.getName(), NodeType.re_none % (self.getName()))
+        return functionTests
+
     def getUnitTest(self, module=None):
 
         moduleTestComment = 'Tests for functions in the %s module.' % module
         functionTests = Templates.functionTest.format(
             self.getName(), NodeType.re_none % (self.getName()))
         functionTests += "\n"
+
+        # print(self.parent)
 
         return Templates.classTest % (
             module, moduleTestComment,
@@ -247,6 +277,70 @@ class NodeFunction(NodeClass):
             else:
                 func_body = '''
       {} = {}().{}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName())
+
+        # print(isinstance(r_type, bool))
+
+        if isinstance(r_type, bool):
+            if r_value == "True":
+                return Templates.methodTest.format(
+                    self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
+            return Templates.methodTest.format(
+                self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
+
+        if isinstance(r_type, int):
+            # print(func_body)
+            return Templates.methodTest.format(
+                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+
+        if r_type is None:
+            return Templates.methodTest.format(
+                self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
+
+    def getFuncAssertTest(self):
+
+        r_type, r_value = self.getReturnType()
+        list_param = self.getParameter()
+        # print(list_param)
+        func_body = None
+        faker = Faker()
+
+        # if self.parent:
+        #     print(self.getParentName())
+
+        arg_body = []
+
+        if self.node.decorator_list:
+            if self.getDecoration().id in ["classmethod", "staticmethod"]:
+                if list_param:
+
+                    for arg_name, arg_type in list_param.items():
+                        if arg_type.lower() == "string":
+                            arg_body.append("{}='{}'".format(
+                                arg_name, faker.name()))
+                        elif arg_type.lower() == "number":
+                            arg_body.append("{}='{}'".format(
+                                arg_name, faker.random_number()))
+                    func_body = '''
+      {}={}({})'''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
+
+                else:
+                    func_body = '''
+      {}={}()'''.format(self.getParentName().lower(), self.getName())
+        else:
+            if list_param:
+
+                for arg_name, arg_type in list_param.items():
+                    if arg_type.lower() == "string":
+                        arg_body.append("{}='{}'".format(
+                            arg_name, faker.name()))
+                    elif arg_type.lower() == "number":
+                        arg_body.append("{}='{}'".format(
+                            arg_name, faker.random_number()))
+                func_body = '''
+      {} = {}({}) '''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
+            else:
+                func_body = '''
+      {} = {}() '''.format(self.getParentName().lower(), self.getName())
 
         # print(isinstance(r_type, bool))
 

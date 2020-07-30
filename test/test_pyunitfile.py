@@ -1,4 +1,4 @@
-
+from pyunitgen.application.objects.pyunitfile import PyUnitFile
 import unittest
 
 		
@@ -22,13 +22,19 @@ class PyUnitFileTest(unittest.TestCase):
 			pass #TODO
 	
 		def test_getModule(self):
-				
+			
       pyunitfile = PyUnitFile().getModule() 
 			
       self.assertIsNone(pyunitfile) 
 
+		def test_getPath(self):
+			
+      pyunitfile = PyUnitFile().getPath() 
+			
+      self.assertIsNone(pyunitfile) 
+
 		def test_getSourceTree(self):
-				
+			
       pyunitfile = PyUnitFile().getSourceTree() 
 			
       self.assertIsNone(pyunitfile) 

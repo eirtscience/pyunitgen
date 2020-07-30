@@ -1,4 +1,4 @@
-
+from pyunitgen.application.objects.pyunitreport import PyUnitReport,PyUnitReportValidation
 import unittest
 
 		
@@ -22,13 +22,13 @@ class PyUnitReportTest(unittest.TestCase):
 			pass #TODO
 	
 		def test_add(self):
-				
+			
       pyunitreport = PyUnitReport().add() 
 			
       self.assertIsNone(pyunitreport) 
 
 		def test_getReport(self):
-				
+			
       pyunitreport = PyUnitReport().getReport() 
 			
       self.assertIsNone(pyunitreport) 

@@ -1,10 +1,10 @@
-
+from pyunitgen.cli import display,display_2,main
 import unittest
 
 		
 class cliTest(unittest.TestCase):
 		"""
-		Tests for functions in the cli module.
+		Tests for methods in the None class.
 		"""
 
 		@classmethod
@@ -23,33 +23,19 @@ class cliTest(unittest.TestCase):
 	
 		def test_display(self):
 			
-      raise NotImplementedError() #TODO: test display
-		
+      cli = display() 
+			
+      self.assertIsNone(cli) 
 
+		def test_display_2(self):
+			
+      cli = display_2() 
+			
+      self.assertIsNone(cli) 
 
-
-class cliTest(unittest.TestCase):
-		"""
-		Tests for functions in the cli module.
-		"""
-
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
-
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
-
-		def setUp(self):
-			pass #TODO
-
-		def tearDown(self):
-			pass #TODO
-	
 		def test_main(self):
 			
-      raise NotImplementedError() #TODO: test main
-		
-
+      cli = main() 
+			
+      self.assertIsNone(cli) 
 		

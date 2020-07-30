@@ -47,27 +47,44 @@ class Generator:
             pyunit_source = PyUnitFile(fileName, root)
             tree = pyunit_source.getSourceTree()
             module = pyunit_source.getModule()
+            import_path = (pyunit_source.getPath())
             # TODO: add the file root and file name to the main node so it can be use as the import path
             # TODO: Replace all the '/' with '.' and remove the '.py' at the end of the file.
             # print(fileName)
             # print(root)
+            # print("File is {} :".format(module))
 
             # Walk the AST
             node = Node(tree, includeInternal=includeInternal)
+            node.module_name = module
             list_children = node.getChildren()
 
             unitreport = PyUnitReport()
 
-            while list_children:
-                my_node = list_children.pop(0)
+            if node.has_class:
+                while list_children:
+                    my_node = list_children.pop(0)
 
-                generate_unit_test_data = my_node.getUnitTest(module)
-                # print(my_node.getName())
-                # print(my_node.list_import)
+                    generate_unit_test_data = my_node.getUnitTest(
+                        module)
+                    # print(my_node.getName())
+                    # print(my_node.list_import)
+                    if generate_unit_test_data:
+                        unitreport.add(generate_unit_test_data)
+            else:
+                generate_unit_test_data = node.getUnitTest(
+                    module)
+
                 if generate_unit_test_data:
                     unitreport.add(generate_unit_test_data)
 
-            return unitreport.getReport()
+            if node.node_module:
+                import_path += " import "
+                import_path += ",".join(node.node_module)
+            else:
+                import_path = ""
+
+            return unitreport.getReport(import_path=import_path)
         except PyUnitExceptionNone as ex:
             # print(ex)
             return None

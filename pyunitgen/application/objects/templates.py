@@ -29,7 +29,7 @@ class Templates:
 
     methodTest = '''
 		def test_{0}(self):
-				{1}
+			{1}
 			{2}'''
 
     classTest = '''
@@ -52,8 +52,8 @@ class %sTest(unittest.TestCase):
 		def tearDown(self):
 			pass #TODO
 	%s'''
-    unitTestBase = '''
+    unitTestBase = '''{}
 import unittest
 
-		%s
+		{}
 		'''
