@@ -24,8 +24,10 @@ import collections
 import os
 
 from .templates import Templates
-from .nodeparser import NodeFunction
+from .nodeparser import NodeFunction, Node
 from .nodetype import NodeType
+from .pyunitfile import PyUnitFile
+from .pyunitreport import PyUnitReport
 
 
 class Generator:
@@ -39,97 +41,17 @@ class Generator:
         :param fileName: str
         :return: str or None
         """
-        # Skip non-Python files
-        if not fileName.endswith('.py') or "__init__" in fileName:
-            return None
-
-        # Skip symlinks
-        path = os.path.join(root, fileName)
-        if os.path.islink(path):
-            print('Symlink: %s' % path)
-            return None
-
-        # Get the parts of the filename
-        pathParts = os.path.split(path)
-        fileName = pathParts[-1]
-        module, _ = os.path.splitext(fileName)
-
-        # Load the file
-        try:
-            with open(path) as f:
-                text = f.read()
-        except UnicodeDecodeError as ude:
-            print('Unicode decode error for %s: %s' % (path, ude))
-            return None
-
-        # Parse it
-        try:
-            tree = ast.parse(text)
-        except Exception as e:  # @suppress warnings since this really does need to catch all
-            print('Failed to parse %s' % path)
-            print(e)
-            return None
+        pyunit_source = PyUnitFile(fileName, root)
+        tree = pyunit_source.getSourceTree()
+        module = pyunit_source.getModule()
 
         # Walk the AST
-        classes = []
-        classToMethods = collections.defaultdict(list)
-        functions = []
-        for node in tree.body:
-            nodeType = type(node)
-            if nodeType is ast.ClassDef:
-                if not node.name.startswith('_') or includeInternal:
-                    classes.append(node)
+        node = Node(tree, includeInternal=includeInternal)
+        list_children = node.getChildren()
 
-                # Track methods
-                for child in node.body:
-                    if type(child) is ast.FunctionDef and not child.name.startswith('_') or includeInternal:
-                        # print(ast.get_docstring(child, clean=True))
-                        classToMethods[node.name].append(child)
+        unitreport = PyUnitReport()
 
-            elif nodeType is ast.FunctionDef:
-                if not node.name.startswith('_') or includeInternal:
-                    functions.append(node.name)
-
-        if len(functions) == 0 and len(classes) == 0:
-            print('No classes or functions in %s' % path)
-            return None
-
-        # Generate a functions test?
-        unitsTests = []
-        if len(functions) > 0:
-            moduleTestComment = 'Tests for functions in the %s module.' % module
-            functionTests = '\n'.join(Templates.functionTest.format(
-                function, NodeType.re_none % (function)) for function in functions)
-
-            unitsTests.append(Templates.classTest % (
-                module, moduleTestComment,
-                functionTests
-            ))
-
-        # Generate class tests?
-        if len(classes) > 0:
-            for c in classes:
-                classTestComment = 'Tests for methods in the %s class.' % c
-                list_method = []
-
-                for class_method in classToMethods[c.name]:
-                    method = NodeFunction(class_method, c)
-
-                    if method.getName()[0] != '_':
-                        list_method.append(
-                            method.getAssertTest())
-
-                methodTests = '\n'.join(list_method)
-
-                unitsTests.append(Templates.classTest % (
-                    c.name, classTestComment,
-                    methodTests,
-                ))
-                # TODO: generate instance construction stub
-
-        # Assemble the unit tests in the template
-        unitTestsStr = '\n\n'.join(
-            unitTest for unitTest in unitsTests if unitTest != '')
-        unitTest = Templates.unitTestBase % unitTestsStr
-
-        return unitTest
+        while list_children:
+            my_node = list_children.pop(0)
+            unitreport.add(my_node.getUnitTest(module))
+        return str(unitreport)

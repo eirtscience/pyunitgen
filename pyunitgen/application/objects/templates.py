@@ -23,8 +23,8 @@
 class Templates:
 
     functionTest = '''
-		def test_%s(self):
-      %s
+		def test_{}(self):
+			{}
 		'''
 
     methodTest = '''
