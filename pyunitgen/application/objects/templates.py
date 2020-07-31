@@ -28,30 +28,30 @@ class Templates:
 		'''
 
     methodTest = '''
-		def test_{0}(self):
-			{1}
-			{2}'''
+    def test_{0}(self):
+        {1}
+        {2}'''
 
     classTest = '''
 class %sTest(unittest.TestCase):
-		"""
-		%s
-		"""
+    """
+    %s
+    """
 
-		@classmethod
-		def setUpClass(cls):
-			pass #TODO
+    @classmethod
+    def setUpClass(cls):
+        pass #TODO
 
-		@classmethod
-		def tearDownClass(cls):
-			pass #TODO
+    @classmethod
+    def tearDownClass(cls):
+        pass #TODO
 
-		def setUp(self):
-			pass #TODO
+    def setUp(self):
+        pass #TODO
 
-		def tearDown(self):
-			pass #TODO
-	%s'''
+    def tearDown(self):
+        pass #TODO
+		%s'''
     unitTestBase = '''{}
 import unittest
 

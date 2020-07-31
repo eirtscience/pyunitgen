@@ -5,6 +5,8 @@ from .nodetype import NodeType, AssertUnitTestCase
 from .templates import Templates
 from faker import Faker
 from .pyunitreport import PyUnitReport, PyUnitReportValidation
+from .pyunittype import PyUnitObject
+from random import choice
 
 Import = namedtuple("Import", ["module", "name", "alias"])
 
@@ -104,7 +106,7 @@ class Node:
 
     def getUnitTest(self, module=None):
         if self.hasChildren():
-            classTestComment = 'Tests for methods in the %s class.' % self.getName()
+            classTestComment = 'Tests for functions in the "%s" file.' % module
             list_method = []
             for method in self.getChildren():
                 if method.isFunction():
@@ -151,10 +153,12 @@ class NodeDecoration:
 
 
 class NodeFunction(NodeClass):
-    # def __init__(self, node, caller_class=None):
-    #     self.node = node
-    #     self.name = node.name
-    #     self.caller = caller_class
+    def __init__(self, node, parent=None, includeInternal=None):
+        super(NodeFunction, self).__init__(
+            node=node, parent=parent, includeInternal=includeInternal)
+        self.list_parameter = {}
+        self.return_type = None
+        self.return_value = None
 
     def isFunction(self):
         return (type(self) == NodeFunction)
@@ -191,7 +195,7 @@ class NodeFunction(NodeClass):
 
     def getFunctionType(self, res):
         _, k, v = res[0]
-        value = v.strip("[ ]",)
+        value = v.strip("[ ]")
         key = k.strip("{ }")
         if "," in value:
             value = value.split(",")
@@ -206,13 +210,38 @@ class NodeFunction(NodeClass):
                 return 1, value
             return 1, None
 
+        if key.lower() == "string":
+            if value:
+                return "", "'{}'".format(value)
+            return "", None
+
+        if key.lower() == "list":
+            if value:
+                return "", value
+            return [], None
+
+        if key.lower() == "dict":
+            if value:
+                return "", value
+            return {}, None
+
+        if key.lower() == "object":
+            if value:
+                return object, value
+            return None, None
+
+        if "apiparam" in key.lower():
+            self.return_type = PyUnitObject(key)
+            if value:
+                return self.return_type, value
+            return None, None
+
     def getReturnType(self):
         comment = self.getComment()
         # print(dir(self.node))
         if comment:
             res = re.findall(
-                r"(\@apiReturn)[ ]+(?P<type>[a-zA-Z0-9\{\} ]+)(?P<arg>[a-zA-Z0-9\[\]\{\}\.'\":, ]+)", comment)
-            # print(res)
+                r"(\@apiReturn)[ ]+(?P<type>[a-zA-Z0-9\{\}\._ ]+)(?P<arg>[a-zA-Z0-9\[\]\{\}\.'\":, _\(\)]+)", comment)
             if res:
 
                 return self.getFunctionType(res)
@@ -225,12 +254,71 @@ class NodeFunction(NodeClass):
 
         if comment:
             res = re.findall(
-                r"(\@apiParam)[ ]+(?P<type>[a-zA-Z0-9\{\} ]+)[ ]+(?P<arg>[a-zA-Z0-9\[\]]+)", comment)
+                r"(\@apiParam)[ ]+(?P<type>[a-zA-Z0-9=_\{\} ]+)[ ]+(?P<arg>[a-zA-Z0-9\[\]:=_\"]+)", comment)
             # print(res)
             if res:
                 list_param = {v.strip("[ ]"): k.strip("{ }")
                               for _, k, v in res}
         return list_param
+
+    def _getFakeDataBy(self, type_of_data=None, default="name"):
+        if default is None:
+            default = "name"
+        faker = Faker()
+        if type_of_data == None:
+            type_of_data = default
+
+        try:
+            return getattr(faker, type_of_data.lower())()
+        except AttributeError:
+            return default
+
+    def generateParameterData(self, list_param):
+        arg_body = []
+        faker = Faker()
+        # print(list_param)
+        boolean_value = choice([True, False])
+        for arg_name, arg_type in list_param.items():
+            type_of_data = None
+            default = None
+            value = None
+            if "=" in arg_type:
+                arg_type, type_of_data = arg_type.split("=")
+            if "=" in arg_name:
+                arg_name, default = arg_name.split("=")
+            if arg_type.lower() == "string":
+
+                if default:
+                    default = default.strip("'\"")
+                value = self._getFakeDataBy(type_of_data, default=default)
+                arg_body.append("{}='{}'".format(
+                    arg_name, value))
+                self.list_parameter[arg_name] = {
+                    "value": value, "type": arg_type.lower()}
+            elif arg_type.lower() == "number":
+                if default is None:
+                    default = "random_number"
+                value = self._getFakeDataBy(type_of_data, default=default)
+                arg_body.append("{}={}".format(
+                    arg_name, value))
+                self.list_parameter[arg_name] = {
+                    "value": value, "type": arg_type.lower()}
+            elif arg_type.lower() == "boolean":
+                arg_body.append("{}={}".format(
+                    arg_name, boolean_value))
+                self.list_parameter[arg_name] = boolean_value
+                self.list_parameter[arg_name] = {
+                    "value": boolean_value, "type": arg_type.lower()}
+            else:
+                pass
+                # value = getattr(faker, arg_type.lower())()
+                # arg_body.append("{}={}".format(
+                #     arg_name, value))
+
+        return arg_body
+
+    def method_initialization_name(self):
+        return "{}_{}".format(self.getParentName().lower(), self.getName())
 
     def getAssertTest(self):
 
@@ -244,18 +332,11 @@ class NodeFunction(NodeClass):
         #     print(self.getParentName())
 
         arg_body = []
-
+        # TODO: Change all the return name of the class method for example {}={}.{}({})
         if self.node.decorator_list:
             if self.getDecoration().id in ["classmethod", "staticmethod"]:
                 if list_param:
-
-                    for arg_name, arg_type in list_param.items():
-                        if arg_type.lower() == "string":
-                            arg_body.append("{}='{}'".format(
-                                arg_name, faker.name()))
-                        elif arg_type.lower() == "number":
-                            arg_body.append("{}='{}'".format(
-                                arg_name, faker.random_number()))
+                    arg_body = self.generateParameterData(list_param)
                     func_body = '''
       {}={}.{}({})'''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body))
 
@@ -265,39 +346,47 @@ class NodeFunction(NodeClass):
         else:
             if list_param:
 
-                for arg_name, arg_type in list_param.items():
-                    if arg_type.lower() == "string":
-                        arg_body.append("{}='{}'".format(
-                            arg_name, faker.name()))
-                    elif arg_type.lower() == "number":
-                        arg_body.append("{}='{}'".format(
-                            arg_name, faker.random_number()))
+                arg_body = self.generateParameterData(list_param)
                 func_body = '''
-      {} = {}().{}({}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body))
+      {0} = {1}()
+      {4}={0}.{2}({3}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body), self.method_initialization_name())
             else:
                 func_body = '''
-      {} = {}().{}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName())
+      {0} = {1}()
+      {3}={0}.{2}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), self.method_initialization_name())
 
-        # print(isinstance(r_type, bool))
+        # print(type(r_type))
+        # print(self.list_parameter)
 
         if isinstance(r_type, bool):
             if r_value == "True":
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
+                    self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.method_initialization_name(), r_value))
             return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
+                self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.method_initialization_name(), r_value))
 
-        if isinstance(r_type, int):
+        if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
             # print(func_body)
             return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.method_initialization_name(), r_value))
+
+        if isinstance(r_type, PyUnitObject):
+            parameter = self.list_parameter.get(
+                r_type.get_return_object_name())
+            value = parameter.get("value")
+            if parameter.get("type") == "string":
+                value = "'{}'".format(value)
+
+            return Templates.methodTest.format(
+                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
 
         if r_type is None:
             return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
+                self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.method_initialization_name()))
 
     def getFuncAssertTest(self):
 
+        # print(self.getReturnType())
         r_type, r_value = self.getReturnType()
         list_param = self.getParameter()
         # print(list_param)
@@ -312,14 +401,7 @@ class NodeFunction(NodeClass):
         if self.node.decorator_list:
             if self.getDecoration().id in ["classmethod", "staticmethod"]:
                 if list_param:
-
-                    for arg_name, arg_type in list_param.items():
-                        if arg_type.lower() == "string":
-                            arg_body.append("{}='{}'".format(
-                                arg_name, faker.name()))
-                        elif arg_type.lower() == "number":
-                            arg_body.append("{}='{}'".format(
-                                arg_name, faker.random_number()))
+                    arg_body = self.generateParameterData(list_param)
                     func_body = '''
       {}={}({})'''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
 
@@ -328,14 +410,7 @@ class NodeFunction(NodeClass):
       {}={}()'''.format(self.getParentName().lower(), self.getName())
         else:
             if list_param:
-
-                for arg_name, arg_type in list_param.items():
-                    if arg_type.lower() == "string":
-                        arg_body.append("{}='{}'".format(
-                            arg_name, faker.name()))
-                    elif arg_type.lower() == "number":
-                        arg_body.append("{}='{}'".format(
-                            arg_name, faker.random_number()))
+                arg_body = self.generateParameterData(list_param)
                 func_body = '''
       {} = {}({}) '''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
             else:
@@ -351,10 +426,20 @@ class NodeFunction(NodeClass):
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
 
-        if isinstance(r_type, int):
+        if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
             # print(func_body)
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+
+        if isinstance(r_type, PyUnitObject):
+            parameter = self.list_parameter.get(
+                r_type.get_return_object_name())
+            value = parameter.get("value")
+            if parameter.get("type") == "string":
+                value = "'{}'".format(value)
+
+            return Templates.methodTest.format(
+                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
 
         if r_type is None:
             return Templates.methodTest.format(
