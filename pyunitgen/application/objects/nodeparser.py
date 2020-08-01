@@ -476,147 +476,155 @@ class NodeFunction(NodeClass):
 
     def getFuncAssertTest(self):
 
-        # print(self.getReturnType())
-        r_type, r_value = self.getReturnType()
-        list_param = self.getParameter()
-        # print(list_param)
-        func_body = None
-        faker = Faker()
+        try:
 
-        # print(self.getName())
+            # print(self.getReturnType())
+            r_type, r_value = self.getReturnType()
+            list_param = self.getParameter()
+            # print(list_param)
+            func_body = None
+            faker = Faker()
 
-        # if self.parent:
-        #     print(self.getParentName())
+            # print(self.getName())
 
-        arg_body = []
+            # if self.parent:
+            #     print(self.getParentName())
 
-        if self.node.decorator_list:
-            if self.getDecoration().id in ["classmethod", "staticmethod"]:
+            arg_body = []
+
+            if self.node.decorator_list:
+                if self.getDecoration().id in ["classmethod", "staticmethod"]:
+                    if list_param:
+                        arg_body = self.generateParameterData(list_param)
+                        func_body = '''
+        {}={}({})'''.format(self.method_initialization_name(), self.getName(), ",".join(arg_body))
+
+                    else:
+                        func_body = '''
+        {}={}()'''.format(self.method_initialization_name(), self.getName())
+            else:
                 if list_param:
                     arg_body = self.generateParameterData(list_param)
                     func_body = '''
-      {}={}({})'''.format(self.method_initialization_name(), self.getName(), ",".join(arg_body))
-
+        {} = {}({}) '''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
                 else:
                     func_body = '''
-      {}={}()'''.format(self.method_initialization_name(), self.getName())
-        else:
-            if list_param:
-                arg_body = self.generateParameterData(list_param)
-                func_body = '''
-      {} = {}({}) '''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
-            else:
-                func_body = '''
-      {} = {}() '''.format(self.getParentName().lower(), self.getName())
+        {} = {}() '''.format(self.getParentName().lower(), self.getName())
 
-        # print(isinstance(r_type, bool))
+            # print(isinstance(r_type, bool))
 
-        if isinstance(r_type, bool):
-            if r_value == "True":
+            if isinstance(r_type, bool):
+                if r_value == "True":
+                    return Templates.methodTest.format(
+                        self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
-            return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
+                    self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
 
-        if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
-            # print(func_body)
-            return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+            if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
+                # print(func_body)
+                return Templates.methodTest.format(
+                    self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
 
-        # print(self.getName())
+            # print(self.getName())
 
-        # if type(r_type) == object:
-        #     print("in object")
-        #     print(self.list_parameter)
-        #     return Templates.methodTest.format(
-        #         self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
-        res_type = str
-        if type(r_type) == PyUnitObject:
-            # print(self.list_parameter)
-            # print("in PyUnitObject")
-            # print(self.list_parameter)
-
-            value = None
-            if isinstance(r_type.get_return_object_name(), list):
-                list_new_value = []
-
-                for param in r_type.get_return_object_name():
-                    return_value, type_value = self.list_parameter.get(
-                        param).values()
-                    func_param = "{}".format(return_value)
-
-                    if type_value == "string":
-                        func_param = "'{}'".format(return_value)
-
-                    list_new_value.append(func_param)
-
-                # print(list_new_value)
-                r_value = (re.sub("\([a-zA-Z0-9 _,\.]+\)",
-                                  "({})".format(",".join(list_new_value)), r_value))
-
-                value = self.getParentName().lower()
-
-                # New code start here
-                # import_path = self.parent.import_path
-                # import_path += " import "
-
-                # # print("node module")
-                # # print(self.parent.parent.node_module)
-                # import_path += ",".join(self.parent.node_module)
-                # # print(import_path)
-                # code_str = import_path + "\n"+func_body
-                # func_body_format = (autopep8.fix_code(code_str))
-                # # print(func_body_format)
-                # codeObejct = compile(func_body_format, 'test', "exec")
-                # Vars = {}
-                # exec(codeObejct, globals(), Vars)
-                # # print(Vars)
-                # # print(self.getParentName().lower())
-                # res_type = type(Vars.get(self.getParentName().lower()))
-                # if r_value.strip() == "'}'":
-                #     r_value = "'{}'".format(
-                #         Vars.get(self.method_initialization_name()))
-
-            else:
-                parameter = self.list_parameter.get(
-                    r_type.get_return_object_name())
-
-                value = parameter.get("value")
-                if parameter.get("type") == "string":
-                    value = "'{}'".format(value)
-
-            # if not isinstance(res_type, (str, int, bool)):
-            #     r_value = res_type.__name__
+            # if type(r_type) == object:
+            #     print("in object")
+            #     print(self.list_parameter)
             #     return Templates.methodTest.format(
-            #         self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(value, r_value))
+            #         self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+            res_type = str
+            if type(r_type) == PyUnitObject:
+                # print(self.list_parameter)
+                # print("in PyUnitObject")
+                # print(self.list_parameter)
 
-            return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
+                value = None
+                if isinstance(r_type.get_return_object_name(), list):
+                    list_new_value = []
 
-        # print(type(r_type))
-        if type(r_type) == type:
-            import_path = self.parent.import_path
-            import_path += " import "
+                    for param in r_type.get_return_object_name():
+                        return_value, type_value = self.list_parameter.get(
+                            param).values()
+                        func_param = "{}".format(return_value)
 
-            # print("node module")
-            # print(self.parent.parent.node_module)
-            import_path += ",".join(self.parent.node_module)
-            # print(import_path)
-            code_str = import_path + "\n"+func_body
-            func_body_format = (autopep8.fix_code(code_str))
-            # print(func_body_format)
-            codeObejct = compile(func_body_format, 'test', "exec")
-            Vars = {}
-            exec(codeObejct, globals(), Vars)
-            # print(Vars)
-            # print(self.getParentName().lower())
-            res_type = type(Vars.get(self.getParentName().lower()))
+                        if type_value == "string":
+                            func_param = "'{}'".format(return_value)
 
-            if not isinstance(res_type, (str, int, bool)):
-                r_value = res_type.__name__
+                        list_new_value.append(func_param)
+
+                    # print(list_new_value)
+                    r_value = (re.sub("\([a-zA-Z0-9 _,\.]+\)",
+                                      "({})".format(",".join(list_new_value)), r_value))
+
+                    value = self.getParentName().lower()
+
+                    # New code start here
+                    # import_path = self.parent.import_path
+                    # import_path += " import "
+
+                    # # print("node module")
+                    # # print(self.parent.parent.node_module)
+                    # import_path += ",".join(self.parent.node_module)
+                    # # print(import_path)
+                    # code_str = import_path + "\n"+func_body
+                    # func_body_format = (autopep8.fix_code(code_str))
+                    # # print(func_body_format)
+                    # codeObejct = compile(func_body_format, 'test', "exec")
+                    # Vars = {}
+                    # exec(codeObejct, globals(), Vars)
+                    # # print(Vars)
+                    # # print(self.getParentName().lower())
+                    # res_type = type(Vars.get(self.getParentName().lower()))
+                    # if r_value.strip() == "'}'":
+                    #     r_value = "'{}'".format(
+                    #         Vars.get(self.method_initialization_name()))
+
+                else:
+                    parameter = self.list_parameter.get(
+                        r_type.get_return_object_name())
+
+                    value = parameter.get("value")
+                    if parameter.get("type") == "string":
+                        value = "'{}'".format(value)
+
+                # if not isinstance(res_type, (str, int, bool)):
+                #     r_value = res_type.__name__
+                #     return Templates.methodTest.format(
+                #         self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(value, r_value))
+
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(self.getParentName().lower(), r_value))
+                    self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
 
-        if r_type is None:
-            return Templates.methodTest.format(
-                self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
+            # print(type(r_type))
+            if type(r_type) == type:
+                import_path = self.parent.import_path
+                import_path += " import "
+
+                # print("node module")
+                # print(self.parent.parent.node_module)
+                import_path += ",".join(self.parent.node_module)
+                # print(import_path)
+                code_str = import_path + "\n"+func_body
+                func_body_format = (autopep8.fix_code(code_str))
+                # print(func_body_format)
+                codeObejct = compile(func_body_format, 'test', "exec")
+                Vars = {}
+                exec(codeObejct, globals(), Vars)
+                # print(Vars)
+                # print(self.getParentName().lower())
+                res_type = type(Vars.get(self.getParentName().lower()))
+
+                if not isinstance(res_type, (str, int, bool)):
+                    r_value = res_type.__name__
+                    return Templates.methodTest.format(
+                        self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(self.getParentName().lower(), r_value))
+
+            if r_type is None:
+                return Templates.methodTest.format(
+                    self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
+
+        except ModuleNotFoundError:
+            pass
+
+        except ImportError:
+            pass

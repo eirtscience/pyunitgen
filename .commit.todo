@@ -1,0 +1,13 @@
+
+
+New Features:
+  ✔ Generate only the last file change instead of all the files @done(20-08-02 01:17)
+  ✔ Allow the application to generate a single file @done(20-08-02 01:35)
+
+Fix Features:
+  ✔ Add a ModuleNotFoundError handler @done(20-08-01 23:34)
+  ☐ 
+
+Bugs:
+  ☐ Fixe the function unittest file generation code indexation @started(20-08-02 06:10)
+

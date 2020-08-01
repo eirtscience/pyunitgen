@@ -25,6 +25,8 @@ import argparse
 import os
 import sys
 from threading import Thread
+from os import path
+import autopep8
 
 import inspect
 _currentFile = os.path.abspath(inspect.getfile(inspect.currentframe()))
@@ -89,11 +91,18 @@ def main(arguments):
             footer = footerFile.read()
 
     # Walk the directory finding Python files
-    for root, _, fileNames in os.walk(arguments.module):
-        if "__pycache__" not in root:
-            # print(fileNames)
+
+    if isinstance(arguments.module, dict):
+        for root, fileNames in arguments.module.items():
             unittest_thread = Thread(target=generate_unittest_for, args=(
                 fileNames, arguments, root, footer, header))
             unittest_thread.start()
+    else:
+        for root, _, fileNames in os.walk(arguments.module):
+            if "__pycache__" not in root:
+                # print(root)
+                unittest_thread = Thread(target=generate_unittest_for, args=(
+                    fileNames, arguments, root, footer, header))
+                unittest_thread.start()
 
     return 0

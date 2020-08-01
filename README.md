@@ -175,3 +175,36 @@ Some developers want to write the unittest code, but they lake time due to the d
               else:
                   return self.name[user_id]
       ```
+
+  
+## `Pyunitgen command line options`
+
+  | **Option** | **Description** |
+  |:---------|:----------------|
+  | `{type}`   | Parameter type, e.g. {Boolean}, {Number}, {String}, {Object}, {List} ,{Dict}, {apiParam}...|
+  | `[value]`  | The return value of the function.This can be any atomic string , boolean, list, dict , number,self or class_name in lower case with another method name  | 
+
+
+  parser.add_argument('module',
+                    help='The module directory')
+
+parser.add_argument('-F', '--footer',
+                    help='File to use as a footer.')
+parser.add_argument('-H', '--header',
+                    help='File to use as a header.')
+parser.add_argument('-X', '--exclude', action='append', default=[],
+                    help='Add a child directory name to exclude.')
+
+parser.add_argument('-f', '--force', action='store_true',
+                    help='Force files to be generated, even if they already exist.')
+parser.add_argument('-i', '--internal', action='store_true',
+                    help='Include internal classes and methods starting with a _.')
+parser.add_argument('-m', '--test-module', default='test',
+                    help='The path of the test module to generate.')
+parser.add_argument('-p', '--test-prefix', default='test_',
+                    help='The prefix for test files.')
+parser.add_argument('-t', '--tab-width', type=int,
+                    help='The width of a tab in spaces (default actual tabs).')
+
+parser.add_argument('-nw', '--no-watch', default=False, action='store_true',
+                    help='Do not watch the directory. When the file been modified.')
