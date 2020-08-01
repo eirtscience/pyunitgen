@@ -1,0 +1,32 @@
+Projects:
+  ☐ Generate Python unit test automatically @started(20-05-27 17:51)
+
+
+Todos:
+  New:
+    ✔ Create a function to get all the python files from the given folder. @started(20-05-27 17:49) @1h30m @done(20-05-27 18:52) @lasted(1h3m36s)
+      ✔ Loop through the each directory and get each file. @done(20-05-27 18:52)
+    ✔ Create a function to get python class, method and function from each file.: @done(20-07-30 20:46)
+      ✔ For each python class @done(20-07-30 20:46)
+      ✔ For each python class method @done(20-07-30 20:46)
+    Create a function to generate the unittest for each class,method and function.:
+      ✔ Create a function to get all the annotation for each class,method and function @done(20-08-01 01:41)
+      ✔ Create a function to use faker to generate the unittest data @done(20-08-01 01:41)
+
+    ✔ Add file module import when generating the file. @done(20-08-01 01:41)
+
+    Add a report when the following are missings:
+      ☐ comment to a function or methods
+      ☐ 
+
+    ☐ Add an email sender so the application can send an email with a report.
+
+    ☐ Make sure to use the compile and exec to exec any function or method to determine it return value in case there is no annotation
+
+  
+  Bugs:
+      ✔ There is a duplicate class generation when the file contains only a functions @done(20-08-01 01:42)
+      ✔ Cannot get the class __init__ parameters @done(20-08-01 16:21)
+
+    
+  
