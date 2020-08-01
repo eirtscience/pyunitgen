@@ -283,7 +283,7 @@ class NodeFunction(NodeClass):
                     self.return_type = PyUnitObject(key)
                     return self.return_type, value
                 return object, value
-            return None, None
+            return object, None
 
         if "apiparam" in key.lower():
             self.return_type = PyUnitObject(key)
@@ -530,7 +530,7 @@ class NodeFunction(NodeClass):
         #     print(self.list_parameter)
         #     return Templates.methodTest.format(
         #         self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
-
+        res_type = str
         if type(r_type) == PyUnitObject:
             # print(self.list_parameter)
             # print("in PyUnitObject")
@@ -543,17 +543,40 @@ class NodeFunction(NodeClass):
                 for param in r_type.get_return_object_name():
                     return_value, type_value = self.list_parameter.get(
                         param).values()
-                    func_param = "{}={}".format(param, return_value)
+                    func_param = "{}".format(return_value)
 
                     if type_value == "string":
-                        func_param = "{}='{}'".format(param, return_value)
+                        func_param = "'{}'".format(return_value)
 
                     list_new_value.append(func_param)
 
                 # print(list_new_value)
                 r_value = (re.sub("\([a-zA-Z0-9 _,\.]+\)",
                                   "({})".format(",".join(list_new_value)), r_value))
+
                 value = self.getParentName().lower()
+
+                # New code start here
+                # import_path = self.parent.import_path
+                # import_path += " import "
+
+                # # print("node module")
+                # # print(self.parent.parent.node_module)
+                # import_path += ",".join(self.parent.node_module)
+                # # print(import_path)
+                # code_str = import_path + "\n"+func_body
+                # func_body_format = (autopep8.fix_code(code_str))
+                # # print(func_body_format)
+                # codeObejct = compile(func_body_format, 'test', "exec")
+                # Vars = {}
+                # exec(codeObejct, globals(), Vars)
+                # # print(Vars)
+                # # print(self.getParentName().lower())
+                # res_type = type(Vars.get(self.getParentName().lower()))
+                # if r_value.strip() == "'}'":
+                #     r_value = "'{}'".format(
+                #         Vars.get(self.method_initialization_name()))
+
             else:
                 parameter = self.list_parameter.get(
                     r_type.get_return_object_name())
@@ -562,8 +585,37 @@ class NodeFunction(NodeClass):
                 if parameter.get("type") == "string":
                     value = "'{}'".format(value)
 
+            # if not isinstance(res_type, (str, int, bool)):
+            #     r_value = res_type.__name__
+            #     return Templates.methodTest.format(
+            #         self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(value, r_value))
+
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
+
+        # print(type(r_type))
+        if type(r_type) == type:
+            import_path = self.parent.import_path
+            import_path += " import "
+
+            # print("node module")
+            # print(self.parent.parent.node_module)
+            import_path += ",".join(self.parent.node_module)
+            # print(import_path)
+            code_str = import_path + "\n"+func_body
+            func_body_format = (autopep8.fix_code(code_str))
+            # print(func_body_format)
+            codeObejct = compile(func_body_format, 'test', "exec")
+            Vars = {}
+            exec(codeObejct, globals(), Vars)
+            # print(Vars)
+            # print(self.getParentName().lower())
+            res_type = type(Vars.get(self.getParentName().lower()))
+
+            if not isinstance(res_type, (str, int, bool)):
+                r_value = res_type.__name__
+                return Templates.methodTest.format(
+                    self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(self.getParentName().lower(), r_value))
 
         if r_type is None:
             return Templates.methodTest.format(
