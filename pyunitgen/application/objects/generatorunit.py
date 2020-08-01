@@ -55,7 +55,8 @@ class Generator:
             # print("File is {} :".format(module))
 
             # Walk the AST
-            node = Node(tree, includeInternal=includeInternal)
+            node = Node(tree, includeInternal=includeInternal,
+                        import_path=import_path)
             node.module_name = module
             list_children = node.getChildren()
 
@@ -83,6 +84,11 @@ class Generator:
                 import_path += ",".join(node.node_module)
             else:
                 import_path = ""
+
+            if node.node_import:
+                import_path += "\n"+"\n".join(node.node_import)
+
+            # print(import_path)
 
             return unitreport.getReport(import_path=import_path)
         except PyUnitExceptionNone as ex:

@@ -3,3 +3,4 @@ readme.todo
 test_dir/
 sample/
 test/
+.env/

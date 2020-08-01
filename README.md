@@ -1,13 +1,15 @@
 
-<div align="center" style="">
-
-  <img src=""><br><br>
+<div align="center">
+  <p style="text-align:center;">
+    <img src="images/pyunitgen.png">
+  </p>
 </div>
 
 # `Pyunitgen`
 
-Creating a software application or program is an easy task, howerver a great functional software application is a task that require you to master different level of the SDLC, this, my friend is the haderst task for you as a software developer. On of an area that most software developer lake expertize is the ability to write a `unittest`. A unit testing is another application within your application, is like a `DRY(Don't Repeat Yourself)` principale. But we do that often when it comes to unittesting our code. `unittest` is the driver of any software application, failed to do that, make your software look like a water basket with unseen hole, when looking into the basket, there is no way you can tell whether the basket has a hole or not, but when trying pouring water into it, you will know that the basket is not in the great shape so it is your software application.
-Some developers want to write the unittest code, but they lake time due to the deadline. Others use manually testing, which in one hand a lot of time consuming, again Others prefer use of `TDD` approach which is double the time of the application delivery. With all that different area , do you think that the user cares ?. To make your life easier, `Pyunitgen`, the first python automatical unittest generator that allow you to focus on your actual features. 
+Creating a software application or program is an easy task, howerver a great functional software application is a task that require you to master different level of the SDLC, this, my friend is the haderst task for you as a software developer. One of the area that most software developer lake expertize is the ability to write a `unittest`. A unit testing is another application within your application, is like a `RY(Repeat Yourself)` principale. But we do that often when it comes to unittesting our code. `unittest` is the driver of any software application, failed to do that, make your software look like a water basket with unseen hole, when looking into the basket, there is no way you can tell whether the basket has a hole or not, but when trying pouring water into it, you will know that the basket is not in the great shape, so it is your software application.
+Some developers want to write the unittest code, but they lake time due to the deadline. Others use manually testing, which in one hand a lot of time consumming, again Others prefer use of `TDD` approach which is double the time of the application delivery. With all that different approaches, do you think that the user cares ?, at the end of the day the `unittest` is made for developers to developers and no one has time to read all your `unittest` codes. So if no one has time to read all your `unittest` codes, can developers fake `unittest`?, yes they can. To make your life easier and solve all above problems, I came up with `pyunitgen`, the first python automatic `unittest` generator that allow you to focus on your actual features. With `pyunitgen`, you are forcing the developer to describe/comment his code and `pyunitgen` will take care of the `unittest`.
+
 
 ## `Requirement`
 ---
@@ -25,7 +27,7 @@ Some developers want to write the unittest code, but they lake time due to the d
 ## `How it works`
 ---
 
-  `Pyunitgen` allows you to tell him, what type data need to be generate for your unittest using `apiDoc` docstring annotation plus some of it's own annotation. 
+  `pyunitgen` allows you to describe the type of data you need to be generate for your `unittest` using a docstring annotation. 
 
 ## `Installation Guide`
 ---
@@ -34,13 +36,13 @@ Some developers want to write the unittest code, but they lake time due to the d
 
     Download the installation script following the below command.
     ```sh
-    ~$ sudo curl -L "https://raw.githubusercontent.com/eirtdev/shell/master/marksix" -o /usr/local/bin/marksix && sudo chmod +x /usr/local/bin/marksix
+    ~$ sudo curl -L "https://raw.githubusercontent.com/eirtdev/shell/pyunitgen" -o /usr/local/bin/pyunitgen && sudo chmod +x /usr/local/bin/pyunitgen
     ```
 
     Now go ahead and run the below command and wait.
 
     ```sh
-    ~$ marksix install
+    ~$ pyunitgen --help
     ```
 
 ## `Getting Start`
@@ -102,7 +104,37 @@ Some developers want to write the unittest code, but they lake time due to the d
             '''
             pass
       ```
-     
+
+    - `Supported type`
+
+        | **Name** | **Description** |
+        |:---------|:----------------|
+        | `Number`   | |
+        | `String`   | |        
+        | `Boolean`   | |
+        | `Dict`   | |
+        | `List`   | |
+
+    - `typeOfData`
+
+      This data value represents python `Fake` module data method.
+
+      - `Example`
+
+         To create a fake data in python , we use the below code.
+
+         ```py
+          fake=Fake()
+          email_address=fake.email()
+         ```
+
+         in `pyunitgen` you write `{type=email}`
+
+         ```py
+          {String=email}
+         ```
+
+
 
   - `@apiReturn`
 
@@ -116,10 +148,30 @@ Some developers want to write the unittest code, but they lake time due to the d
 
     | **Name** | **Description** |
     |:---------|:----------------|
-    | `{type}`   | Parameter type, e.g. {Boolean}, {Number}, {String}, {Object}, {List} ,{Dict}, ...|
-    | `[value]`  | The return value of the function.This can be any atomic string , boolean, list, dict , number  | 
+    | `{type}`   | Parameter type, e.g. {Boolean}, {Number}, {String}, {Object}, {List} ,{Dict}, {apiParam}...|
+    | `[value]`  | The return value of the function.This can be any atomic string , boolean, list, dict , number,self or class_name in lower case with another method name  | 
 
     - `Example`
 
       ```py
+        class Person:
+          name = []
+
+          def set_name(self, user_name):
+              '''
+              @apiParam {String} [user_name]
+              @apiReturn {apiParam.user_name} [self.get_name(0)]
+              '''
+              self.name.append(user_name)
+              return len(self.name) - 1
+
+          def get_name(self, user_id):
+              '''
+              @apiParam {Number} [user_id=1]
+              @apiReturn {String} [There is no such user]
+              '''
+              if user_id >= len(self.name):
+                  return 'There is no such user'
+              else:
+                  return self.name[user_id]
       ```

@@ -5,4 +5,6 @@ class PyUnitObject:
         self.key = pyukey
 
     def get_return_object_name(self):
-        return str(self.key).split(".")[1]
+        if isinstance(self.key, str):
+            return str(self.key).split(".")[1]
+        return self.key

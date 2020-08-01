@@ -7,6 +7,8 @@ from faker import Faker
 from .pyunitreport import PyUnitReport, PyUnitReportValidation
 from .pyunittype import PyUnitObject
 from random import choice
+import autopep8
+
 
 Import = namedtuple("Import", ["module", "name", "alias"])
 
@@ -14,6 +16,16 @@ Import = namedtuple("Import", ["module", "name", "alias"])
 #      file so you don't overwrite the existing one. When comparing and there are some
 #      missing function or method, just create those missing one.
 
+
+# TODO: Allow the user to use 'self' instead the lower case letter for the class as '@apiReturn {apiParam.user_name} [person.get_name(0)]'
+#       change that to @apiReturn {apiParam.user_name} [self.get_name(0)]
+
+# TODO: There is issue using the following return parameter in python simple function
+#      @apiReturn {Object} [Pet(apiParam.name,apiParam.species,apiParam.age)]
+#       not easy to import for example the class Pet showing above
+
+
+# TODO: When generating the parameter check whether the parameter is a positional parameter or not
 
 class AstNode:
     def __init__(self, node):
@@ -24,7 +36,7 @@ class AstNode:
 
 
 class Node:
-    def __init__(self, node, parent=None, includeInternal=None):
+    def __init__(self, node, parent=None, includeInternal=None, import_path=None):
         self.node = AstNode(node)
         self.list_children = []
         self.parent = parent
@@ -35,6 +47,10 @@ class Node:
         self.list_import = []
         self.node_module = []
         self.has_class = False
+        self.init_method = None
+        self.import_path = import_path
+        self.node_import = []
+        # print(ast.dump(node, annotate_fields=True))
         self.init_children()
 
     def getParentName(self):
@@ -56,11 +72,12 @@ class Node:
             return
 
         for n in node.names:
-            self.list_import.append(
-                Import(module, n.name.split('.'), n.asname))
+            if Import(module, n.name.split('.'), n.asname) not in self.list_import:
+                self.list_import.append(
+                    Import(module, n.name.split('.'), n.asname))
 
     def init_children(self):
-
+        # TODO: At this stage we are ignoring all the ast.FunctionDef that start with '__'
         for child in self.node.body:
             nodeType = type(child)
             node = None
@@ -69,9 +86,10 @@ class Node:
             if nodeType is ast.ClassDef:
                 if not child.name.startswith('_') or self.includeInternal:
                     node = NodeClass(child, parent=self,
-                                     includeInternal=self.includeInternal)
+                                     includeInternal=self.includeInternal, import_path=self.import_path)
                     self.node_module.append(node.getName())
                     self.has_class = True
+                    # node.import_path = self.import_path
             elif nodeType is ast.FunctionDef:
                 if not child.name.startswith('_') or self.includeInternal:
                     node = NodeFunction(
@@ -79,6 +97,10 @@ class Node:
                     if self.parent == None:
                         # print(child.name)
                         self.node_module.append(node.getName())
+                elif child.name.startswith('__init__'):
+                    init_node = NodeFunction(
+                        child, parent=self, includeInternal=self.includeInternal)
+                    init_node.parent.init_method = init_node
 
             self.get_imports(child)
             if node:
@@ -111,20 +133,46 @@ class Node:
             for method in self.getChildren():
                 if method.isFunction():
                     if method.getName()[0] != '_':
-                        list_method.append(method.getFuncAssertTest())
+                        if method.getFuncAssertTest():
+                            list_method.append(method.getFuncAssertTest())
 
-            methodTests = '\n'.join(list_method)
+            # print(self.list_import)
+            if self.list_import:
 
-            return Templates.classTest % (
-                module, classTestComment,
-                methodTests,
-            )
+                for node_module, name, alias in self.list_import:
+                    module_import = "from "
+                    module_import += ".".join(node_module)
+                    module_import += " import " + ",".join(name)
+                    if alias:
+                        module_import += " as " + alias
+                    self.node_import.append(module_import)
+
+            # print(method.getName())
+
+            # print(self.list_import[0].module)
+            if list_method:
+                methodTests = '\n'.join(list_method)
+
+                return Templates.classTest % (
+                    module, classTestComment,
+                    methodTests,
+                )
 
 
 class NodeClass(Node):
 
     def isClass(self):
         return (type(self) == NodeClass)
+
+    def get_init_method_arg(self):
+        if self.init_method:
+            if self.init_method.getParameter():
+                init_argument = self.init_method.generateParameterData(
+                    self.init_method.getParameter())
+                # print(ast.dump(self.init_method.node))
+                arg_str = ",".join(init_argument)
+                return re.sub("[a-zA-Z0-9]+=", "", arg_str)
+        return ""
 
     def getUnitTest(self, module=None):
         if self.hasChildren():
@@ -159,6 +207,8 @@ class NodeFunction(NodeClass):
         self.list_parameter = {}
         self.return_type = None
         self.return_value = None
+        # print(node.name)
+        # print(ast.dump(node))
 
     def isFunction(self):
         return (type(self) == NodeFunction)
@@ -197,7 +247,7 @@ class NodeFunction(NodeClass):
         _, k, v = res[0]
         value = v.strip("[ ]")
         key = k.strip("{ }")
-        if "," in value:
+        if "," in value and key.lower() != "object":
             value = value.split(",")
 
         if key.lower() == "boolean":
@@ -227,6 +277,11 @@ class NodeFunction(NodeClass):
 
         if key.lower() == "object":
             if value:
+                if "apiparam" in value.lower():
+                    key = re.sub(
+                        "([a-zA-Z0-9\(\)\[\] ]+)?apiParam.", "", value).strip("( )").split(",")
+                    self.return_type = PyUnitObject(key)
+                    return self.return_type, value
                 return object, value
             return None, None
 
@@ -242,6 +297,7 @@ class NodeFunction(NodeClass):
         if comment:
             res = re.findall(
                 r"(\@apiReturn)[ ]+(?P<type>[a-zA-Z0-9\{\}\._ ]+)(?P<arg>[a-zA-Z0-9\[\]\{\}\.'\":, _\(\)]+)", comment)
+            # print(res)
             if res:
 
                 return self.getFunctionType(res)
@@ -317,6 +373,9 @@ class NodeFunction(NodeClass):
 
         return arg_body
 
+    def _get_object_name(self):
+        return self.getParentName().lower()
+
     def method_initialization_name(self):
         return "{}_{}".format(self.getParentName().lower(), self.getName())
 
@@ -328,6 +387,11 @@ class NodeFunction(NodeClass):
         func_body = None
         faker = Faker()
 
+        if r_value and ("self" in r_value):
+            r_value = r_value.replace("self", self._get_object_name())
+
+        init_arg = self.parent.get_init_method_arg()
+
         # if self.parent:
         #     print(self.getParentName())
 
@@ -338,22 +402,44 @@ class NodeFunction(NodeClass):
                 if list_param:
                     arg_body = self.generateParameterData(list_param)
                     func_body = '''
-      {}={}.{}({})'''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body))
+      {}={}.{}({})'''.format(self.method_initialization_name(), self.getParentName(), self.getName(), ",".join(arg_body))
 
                 else:
                     func_body = '''
-      {}={}.{}()'''.format(self.getParentName().lower(), self.getParentName(), self.getName())
+      {}={}.{}()'''.format(self.method_initialization_name(), self.getParentName(), self.getName())
         else:
             if list_param:
 
                 arg_body = self.generateParameterData(list_param)
                 func_body = '''
-      {0} = {1}()
-      {4}={0}.{2}({3}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body), self.method_initialization_name())
+      {0} = {1}({5})
+      {4}={0}.{2}({3}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body), self.method_initialization_name(), init_arg)
             else:
                 func_body = '''
-      {0} = {1}()
-      {3}={0}.{2}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), self.method_initialization_name())
+      {0} = {1}({4})
+      {3} = {0}.{2}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), self.method_initialization_name(), init_arg)
+
+        if self.parent.init_method:
+            try:
+                import_path = self.parent.import_path
+                import_path += " import "
+                # print("node module")
+                # print(self.parent.parent.node_module)
+                import_path += ",".join(self.parent.parent.node_module)
+                code_str = import_path + "\n"+func_body
+                func_body_format = (autopep8.fix_code(code_str))
+                # print(func_body)
+                codeObejct = compile(func_body_format, 'test', "exec")
+                Vars = {}
+                exec(codeObejct, globals(), Vars)
+
+                if r_value.strip() == "'}'":
+                    r_value = "'{}'".format(
+                        Vars.get(self.method_initialization_name()))
+            except ModuleNotFoundError:
+                pass
+            except TypeError:
+                pass
 
         # print(type(r_type))
         # print(self.list_parameter)
@@ -367,6 +453,10 @@ class NodeFunction(NodeClass):
 
         if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
             # print(func_body)
+            # print("start")
+            # print(self.method_initialization_name())
+            # print(r_value)
+            # print("end")
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.method_initialization_name(), r_value))
 
@@ -393,6 +483,8 @@ class NodeFunction(NodeClass):
         func_body = None
         faker = Faker()
 
+        # print(self.getName())
+
         # if self.parent:
         #     print(self.getParentName())
 
@@ -403,11 +495,11 @@ class NodeFunction(NodeClass):
                 if list_param:
                     arg_body = self.generateParameterData(list_param)
                     func_body = '''
-      {}={}({})'''.format(self.getParentName().lower(), self.getName(), ",".join(arg_body))
+      {}={}({})'''.format(self.method_initialization_name(), self.getName(), ",".join(arg_body))
 
                 else:
                     func_body = '''
-      {}={}()'''.format(self.getParentName().lower(), self.getName())
+      {}={}()'''.format(self.method_initialization_name(), self.getName())
         else:
             if list_param:
                 arg_body = self.generateParameterData(list_param)
@@ -431,12 +523,44 @@ class NodeFunction(NodeClass):
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
 
-        if isinstance(r_type, PyUnitObject):
-            parameter = self.list_parameter.get(
-                r_type.get_return_object_name())
-            value = parameter.get("value")
-            if parameter.get("type") == "string":
-                value = "'{}'".format(value)
+        # print(self.getName())
+
+        # if type(r_type) == object:
+        #     print("in object")
+        #     print(self.list_parameter)
+        #     return Templates.methodTest.format(
+        #         self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+
+        if type(r_type) == PyUnitObject:
+            # print(self.list_parameter)
+            # print("in PyUnitObject")
+            # print(self.list_parameter)
+
+            value = None
+            if isinstance(r_type.get_return_object_name(), list):
+                list_new_value = []
+
+                for param in r_type.get_return_object_name():
+                    return_value, type_value = self.list_parameter.get(
+                        param).values()
+                    func_param = "{}={}".format(param, return_value)
+
+                    if type_value == "string":
+                        func_param = "{}='{}'".format(param, return_value)
+
+                    list_new_value.append(func_param)
+
+                # print(list_new_value)
+                r_value = (re.sub("\([a-zA-Z0-9 _,\.]+\)",
+                                  "({})".format(",".join(list_new_value)), r_value))
+                value = self.getParentName().lower()
+            else:
+                parameter = self.list_parameter.get(
+                    r_type.get_return_object_name())
+
+                value = parameter.get("value")
+                if parameter.get("type") == "string":
+                    value = "'{}'".format(value)
 
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
