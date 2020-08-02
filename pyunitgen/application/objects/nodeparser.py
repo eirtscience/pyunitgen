@@ -402,22 +402,22 @@ class NodeFunction(NodeClass):
                 if list_param:
                     arg_body = self.generateParameterData(list_param)
                     func_body = '''
-      {}={}.{}({})'''.format(self.method_initialization_name(), self.getParentName(), self.getName(), ",".join(arg_body))
+        {}={}.{}({})'''.format(self.method_initialization_name(), self.getParentName(), self.getName(), ",".join(arg_body))
 
                 else:
                     func_body = '''
-      {}={}.{}()'''.format(self.method_initialization_name(), self.getParentName(), self.getName())
+        {}={}.{}()'''.format(self.method_initialization_name(), self.getParentName(), self.getName())
         else:
             if list_param:
 
                 arg_body = self.generateParameterData(list_param)
                 func_body = '''
-      {0} = {1}({5})
-      {4}={0}.{2}({3}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body), self.method_initialization_name(), init_arg)
+        {0} = {1}({5})
+        {4}={0}.{2}({3}) '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), ",".join(arg_body), self.method_initialization_name(), init_arg)
             else:
                 func_body = '''
-      {0} = {1}({4})
-      {3} = {0}.{2}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), self.method_initialization_name(), init_arg)
+        {0} = {1}({4})
+        {3} = {0}.{2}() '''.format(self.getParentName().lower(), self.getParentName(), self.getName(), self.method_initialization_name(), init_arg)
 
         if self.parent.init_method:
             try:
@@ -439,6 +439,8 @@ class NodeFunction(NodeClass):
             except ModuleNotFoundError:
                 pass
             except TypeError:
+                pass
+            except ImportError:
                 pass
 
         # print(type(r_type))
@@ -511,19 +513,20 @@ class NodeFunction(NodeClass):
                     func_body = '''
         {} = {}() '''.format(self.getParentName().lower(), self.getName())
 
+            body = func_body
             # print(isinstance(r_type, bool))
 
             if isinstance(r_type, bool):
                 if r_value == "True":
                     return Templates.methodTest.format(
-                        self.getName(), func_body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
+                        self.getName(), body, AssertUnitTestCase.assert_true.format(self.getParentName().lower(), r_value))
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
+                    self.getName(), body, AssertUnitTestCase.assert_false.format(self.getParentName().lower(), r_value))
 
             if isinstance(r_type, int) or isinstance(r_type, str) or isinstance(r_type, list) or isinstance(r_type, dict):
                 # print(func_body)
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
+                    self.getName(), body, AssertUnitTestCase.assert_equal.format(self.getParentName().lower(), r_value))
 
             # print(self.getName())
 
@@ -603,6 +606,7 @@ class NodeFunction(NodeClass):
                 # print("node module")
                 # print(self.parent.parent.node_module)
                 import_path += ",".join(self.parent.node_module)
+
                 # print(import_path)
                 code_str = import_path + "\n"+func_body
                 func_body_format = (autopep8.fix_code(code_str))
@@ -617,11 +621,11 @@ class NodeFunction(NodeClass):
                 if not isinstance(res_type, (str, int, bool)):
                     r_value = res_type.__name__
                     return Templates.methodTest.format(
-                        self.getName(), func_body, AssertUnitTestCase.assert_is_instance.format(self.getParentName().lower(), r_value))
+                        self.getName(), body, AssertUnitTestCase.assert_is_instance.format(self.getParentName().lower(), r_value))
 
             if r_type is None:
                 return Templates.methodTest.format(
-                    self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
+                    self.getName(), body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
 
         except ModuleNotFoundError:
             pass

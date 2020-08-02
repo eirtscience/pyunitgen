@@ -44,7 +44,20 @@ def filesum(path_to_file):
     return hashlib.md5(str(file_data).encode('utf-8')).hexdigest()
 
 
+def hash_sum(file_or_folder, is_file=False):
+    sums = []
+    if is_file:
+        hashsum = filesum(file_or_folder)
+        sums.append(hashsum)
+        return sums
+    return checksum(file_or_folder)
+
+
 def watch(argument):
+
+    is_file = False
+
+    argument_module = argument.module
 
     global list_of_changed_file
 
@@ -54,18 +67,19 @@ def watch(argument):
         list_of_changed_file[path_dir] = []
         list_of_changed_file[path_dir].append(filename)
         argument.module = list_of_changed_file
+        is_file = True
 
     if argument.no_watch:
         Generator(argument).start()
     else:
-        module = argument.module
-        sums = checksum(module)
+        # module = argument.module
+        sums = hash_sum(argument_module, is_file)
         sum_hash = hashlib.md5(str(''.join(sums)).encode('utf-8')).hexdigest()
 
         while True:
             try:
 
-                sums = checksum(module)
+                sums = hash_sum(argument_module, is_file)
 
                 new_sum = hashlib.md5(
                     str(''.join(sums)).encode('utf-8')).hexdigest()
