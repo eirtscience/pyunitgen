@@ -130,6 +130,7 @@ class Node:
     def getUnitTest(self, module=None):
 
         methodTests = ""
+        classTestComment = ""
         # print('Tests for functions in the "{}" file.=> {}'.format(
         #     module, len(self.getChildren())))
         if self.hasChildren():

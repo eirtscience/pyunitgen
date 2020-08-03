@@ -1,13 +1,11 @@
 
 
+
 New Features:
 
 
 Fix Features:
-  ✔ Watch a single file as an entire folder @done(20-08-02 07:58)
 
 Bugs:
-  ✔ Fixe the function unittest file generation code indexation @started(20-08-02 06:10) @done(20-08-02 08:06) @lasted(1h56m5s)
-  ✔ Fixe repeated called of the function many times @done(20-08-03 07:50)
-  ✔ Add a reload module package to reload the module whenever the application detect the file changes @done(20-08-03 07:51)
 
+  

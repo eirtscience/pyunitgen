@@ -27,7 +27,7 @@ Some developers want to write the unittest code, but they lake time due to the d
 ## `How it works`
 ---
 
-  `pyunitgen` allows you to describe the type of data you need to be generate for your `unittest` using a docstring annotation. 
+  `pyunitgen` allows you to describe the type of data you need to generate for your `unittest` using a docstring annotation. 
 
 ## `Installation Guide`
 ---
@@ -44,6 +44,24 @@ Some developers want to write the unittest code, but they lake time due to the d
     ```sh
     ~$ pyunitgen --help
     ```
+
+## `Pyunitgen command line`
+---
+  The below table describe the information needed by `pyunitgen` to run create the unittest data. The option unlosed with '`[]`' defined the optional option to provide to `pyunitgen`.
+
+  | **Option** | **Description** |**Default**|
+  |:-----------|:------------------|:----------|
+  | `module`   | The module directory to use for the unittest compilation. This can be a single file as a directories of directories|
+  | `[-F]`  | File to use as a footer template.|
+  |`[-H]`| File to use as a header template.|
+  |`[-X]`| Add a child directory name to exclude.|
+  |`[-f]`|Force files to be generated, even if they already exist.|
+  |`[-i]`|Include internal classes and methods starting with a _.|
+  |`[-m]`|The path of the test module to generate.|test|
+  |`[-p]`|The prefix for test files.|test_|
+  |`[-t]`|The width of a tab in spaces (default actual tabs).|
+  |`[-nw]`|Tell `pyunitgen` to watch the module directory or file whenever the file has been modified.So it can modify the unittest file.|
+  
 
 ## `Getting Start`
 ---
@@ -344,6 +362,8 @@ Some developers want to write the unittest code, but they lake time due to the d
         ```
 
       ```py
+      # file: sample/func.py
+
       username = None
 
       def name():
@@ -387,7 +407,63 @@ Some developers want to write the unittest code, but they lake time due to the d
               return False
       ```
 
+        - `output`
+
+          ```py
+          from sample.func import name,set_username,get_username,test_boolean_true,test_boolean_false
+
+          import unittest
+
+              
+          class funcTest(unittest.TestCase):
+              """
+              Tests for functions in the "func" file.
+              """
+
+              @classmethod
+              def setUpClass(cls):
+                  pass #TODO
+
+              @classmethod
+              def tearDownClass(cls):
+                  pass #TODO
+
+              def setUp(self):
+                  pass #TODO
+
+              def tearDown(self):
+                  pass #TODO
+              
+              def test_name(self):
+                  
+                  func = name() 
+                  
+                  self.assertEqual(func, 'Evarist') 
+
+              def test_set_username(self):
+                  
+                  func = set_username(name='Rebecca Mccall') 
+                  
+                  self.assertTrue(func,True)
+
+              def test_test_boolean_true(self):
+                  
+                  func = test_boolean_true(first_name='Brett Holt') 
+                  
+                  self.assertTrue(func,True)
+
+              def test_test_boolean_false(self):
+                  
+                  func = test_boolean_false(first_name='Jessica Morrison') 
+                  
+                  self.assertFalse(func,False)
+		          
+          ```
+
+
         ```py
+        # file: sample/person.py
+
         class Person:
             name = []
 
@@ -410,7 +486,52 @@ Some developers want to write the unittest code, but they lake time due to the d
                     return self.name[user_id]
         ```
 
+        - `output`
+
+            ```py
+
+            from sample.person import Person
+            import unittest
+
+                
+            class PersonTest(unittest.TestCase):
+                """
+                Tests for methods in the Person class.
+                """
+
+                @classmethod
+                def setUpClass(cls):
+                    pass #TODO
+
+                @classmethod
+                def tearDownClass(cls):
+                    pass #TODO
+
+                def setUp(self):
+                    pass #TODO
+
+                def tearDown(self):
+                    pass #TODO
+                
+                def test_set_name(self):
+                    
+                    person = Person()
+                    person_set_name=person.set_name(user_name='Maureen Simpson') 
+                    
+                    self.assertEqual('Maureen Simpson', person.get_name(0)) 
+
+                def test_get_name(self):
+                    
+                    person = Person()
+                    person_get_name=person.get_name(user_id=1) 
+                    
+                    self.assertEqual(person_get_name, 'There is no such user') 
+            ```
+
+
         ```py
+        # file: sample/test.py
+
         from .server import Server
 
         class AnchorPeer:
@@ -510,36 +631,114 @@ Some developers want to write the unittest code, but they lake time due to the d
             def test_unit_4(self, test1, test2):
                 pass
         ```
+        - `output`
 
-  
-## `Pyunitgen command line options`
+          ```py
+          from sample.test import AnchorPeer
+          import unittest
 
-  | **Option** | **Description** |
-  |:---------|:----------------|
-  | `{type}`   | Parameter type, e.g. {Boolean}, {Number}, {String}, {Object}, {List} ,{Dict}, {apiParam}...|
-  | `[value]`  | The return value of the function.This can be any atomic string , boolean, list, dict , number,self or class_name in lower case with another method name  | 
+              
+          class AnchorPeerTest(unittest.TestCase):
+              """
+              Tests for methods in the AnchorPeer class.
+              """
 
+              @classmethod
+              def setUpClass(cls):
+                  pass #TODO
 
-  parser.add_argument('module',
-                    help='The module directory')
+              @classmethod
+              def tearDownClass(cls):
+                  pass #TODO
 
-parser.add_argument('-F', '--footer',
-                    help='File to use as a footer.')
-parser.add_argument('-H', '--header',
-                    help='File to use as a header.')
-parser.add_argument('-X', '--exclude', action='append', default=[],
-                    help='Add a child directory name to exclude.')
+              def setUp(self):
+                  pass #TODO
 
-parser.add_argument('-f', '--force', action='store_true',
-                    help='Force files to be generated, even if they already exist.')
-parser.add_argument('-i', '--internal', action='store_true',
-                    help='Include internal classes and methods starting with a _.')
-parser.add_argument('-m', '--test-module', default='test',
-                    help='The path of the test module to generate.')
-parser.add_argument('-p', '--test-prefix', default='test_',
-                    help='The prefix for test files.')
-parser.add_argument('-t', '--tab-width', type=int,
-                    help='The width of a tab in spaces (default actual tabs).')
+              def tearDown(self):
+                  pass #TODO
+              
+              def test_dump(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_dump = anchorpeer.dump() 
+                  
+                  self.assertIsNone(anchorpeer_dump) 
 
-parser.add_argument('-nw', '--no-watch', default=False, action='store_true',
-                    help='Do not watch the directory. When the file been modified.')
+              def test_test_unit_that_return_dict(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_that_return_dict = anchorpeer.test_unit_that_return_dict() 
+                  
+                  self.assertEqual(anchorpeer_test_unit_that_return_dict, {"name":4}) 
+
+              def test_test_unit_that_return_dict_with_a_dictionary_type(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_that_return_dict_with_a_dictionary_type = anchorpeer.test_unit_that_return_dict_with_a_dictionary_type() 
+                  
+                  self.assertEqual(anchorpeer_test_unit_that_return_dict_with_a_dictionary_type, {"name":4}) 
+
+              def test_test_unit_with_email(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_with_email=anchorpeer.test_unit_with_email(test1='marcus24@davis.com') 
+                  
+                  self.assertTrue(anchorpeer_test_unit_with_email,True)
+
+              def test_test_unit_with_default_test2_value_and_string(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_with_default_test2_value_and_string=anchorpeer.test_unit_with_default_test2_value_and_string(test1='John',test2='Fangnikoue') 
+                  
+                  self.assertTrue(anchorpeer_test_unit_with_default_test2_value_and_string,True)
+
+              def test_test_unit_with_number_and_string(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_with_number_and_string=anchorpeer.test_unit_with_number_and_string(test1='Kimberly',test2=594) 
+                  
+                  self.assertTrue(anchorpeer_test_unit_with_number_and_string,True)
+
+              def test_test_unit_with_address(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_with_address=anchorpeer.test_unit_with_address(address='691 Knox Hill Apt. 408') 
+                  
+                  self.assertTrue(anchorpeer_test_unit_with_address,True)
+
+              def test_test_unit_with_boolean_and_string(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_with_boolean_and_string=anchorpeer.test_unit_with_boolean_and_string(test1='Timothy Powell',test2=True) 
+                  
+                  self.assertTrue(anchorpeer_test_unit_with_boolean_and_string,True)
+
+              def test_test_unit_that_return_a_list(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_that_return_a_list = anchorpeer.test_unit_that_return_a_list() 
+                  
+                  self.assertEqual(anchorpeer_test_unit_that_return_a_list, ['1', '2', '3', '4']) 
+
+              def test_test_unit_that_return_a_list_with_a_list_type(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_that_return_a_list_with_a_list_type = anchorpeer.test_unit_that_return_a_list_with_a_list_type() 
+                  
+                  self.assertEqual(anchorpeer_test_unit_that_return_a_list_with_a_list_type, ['1', '2', '3', '4']) 
+
+              def test_test_unit_3(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_3 = anchorpeer.test_unit_3() 
+                  
+                  self.assertIsNone(anchorpeer_test_unit_3) 
+
+              def test_test_unit_4(self):
+                  
+                  anchorpeer = AnchorPeer()
+                  anchorpeer_test_unit_4 = anchorpeer.test_unit_4() 
+                  
+                  self.assertIsNone(anchorpeer_test_unit_4) 
+              
+          ```
