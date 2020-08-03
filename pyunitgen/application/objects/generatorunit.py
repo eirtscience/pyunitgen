@@ -57,6 +57,7 @@ class Generator:
             # Walk the AST
             node = Node(tree, includeInternal=includeInternal,
                         import_path=import_path)
+            node.unit_file = pyunit_source
             node.module_name = module
             list_children = node.getChildren()
 

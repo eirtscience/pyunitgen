@@ -36,8 +36,10 @@ sys.path.insert(0, _parentDir)
 
 
 def generate_unittest(root, fileName, arguments, footer, header):
+
     unitTest = Generator.generateUnitTest(
         root, fileName, arguments.internal)
+
     if unitTest:
         # Replace tabs
         if arguments.tab_width is not None:
@@ -91,6 +93,7 @@ def main(arguments):
             footer = footerFile.read()
 
     # Walk the directory finding Python files
+    # print(arguments.module)
 
     if isinstance(arguments.module, dict):
         for root, fileNames in arguments.module.items():

@@ -33,6 +33,7 @@ def checksum(root_dir):
                             sums.append(file_hash)
                             file_sums[file_name] = file_hash
                             list_of_changed_file[file_dir].append(file_name)
+    # print(list_of_changed_file)
 
     return sums
 
@@ -78,6 +79,7 @@ def watch(argument):
 
         while True:
             try:
+                # print(list_of_changed_file)
 
                 sums = hash_sum(argument_module, is_file)
 
@@ -86,10 +88,12 @@ def watch(argument):
 
                 if list_of_changed_file:
                     argument.module = list_of_changed_file
-                    list_of_changed_file = {}
 
-                if new_sum != sum_hash:
+                if new_sum != sum_hash and argument.module:
+                    # print("Sending module data")
                     Generator(argument).start()
+                    list_of_changed_file = {}
+                    argument.module = None
 
                 sum_hash = new_sum
                 time.sleep(1)

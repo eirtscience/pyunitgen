@@ -15,7 +15,11 @@ class PyUnitFile:
     def getModule(self):
         return self.module
 
+    def getRoot(self):
+        return self.root.strip("/")
+
     def getPath(self):
+        # print(self.path.replace("/", ".").rstrip(".py"))
         return "from "+self.path.replace("/", ".").rstrip(".py")
 
     def getSourceTree(self):
@@ -39,6 +43,7 @@ class PyUnitFile:
         try:
             with open(path) as f:
                 text = f.read()
+
         except UnicodeDecodeError as ude:
             print('Unicode decode error for %s: %s' % (path, ude))
             raise PyUnitExceptionNone

@@ -19,6 +19,8 @@ class Generator:
         if not path.isdir(output_dir):
             makedirs(output_dir)
 
+        # print(self.argument.module)
+
         main(self.argument)
 
         # shell_script = "python -m PyTestStub.GenerateUnitTests -f -m {1} {0} >/dev/null 2>&1".format(

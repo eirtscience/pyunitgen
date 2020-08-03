@@ -52,6 +52,7 @@ class Node:
         self.node_import = []
         # print(ast.dump(node, annotate_fields=True))
         self.init_children()
+        self.unit_file = None
 
     def getParentName(self):
         if isinstance(self.parent, ast.ClassDef):
@@ -127,14 +128,20 @@ class Node:
         return False
 
     def getUnitTest(self, module=None):
+
+        methodTests = ""
+        # print('Tests for functions in the "{}" file.=> {}'.format(
+        #     module, len(self.getChildren())))
         if self.hasChildren():
             classTestComment = 'Tests for functions in the "%s" file.' % module
             list_method = []
             for method in self.getChildren():
                 if method.isFunction():
                     if method.getName()[0] != '_':
-                        if method.getFuncAssertTest():
-                            list_method.append(method.getFuncAssertTest())
+                        func_data = None
+                        func_data = method.getFuncAssertTest()
+                        if func_data:
+                            list_method.append(func_data)
 
             # print(self.list_import)
             if self.list_import:
@@ -153,10 +160,10 @@ class Node:
             if list_method:
                 methodTests = '\n'.join(list_method)
 
-                return Templates.classTest % (
-                    module, classTestComment,
-                    methodTests,
-                )
+        return Templates.classTest % (
+            module, classTestComment,
+            methodTests,
+        )
 
 
 class NodeClass(Node):
@@ -476,6 +483,39 @@ class NodeFunction(NodeClass):
             return Templates.methodTest.format(
                 self.getName(), func_body, AssertUnitTestCase.assert_is_none.format(self.method_initialization_name()))
 
+    def run_test(self, func_body):
+        # This is only will be used by function unit test implementation
+        unit_file = self.parent.unit_file
+        exec_import_path = "\nfrom importlib import reload\n"
+
+        #import_path += "import {}".format(self.parent.module_name)
+        import_path = self.parent.import_path
+        import_path += " import "
+
+        # print("node module")
+        # print(self.parent.parent.node_module)
+        import_path += ",".join(self.parent.node_module)
+
+        exec_import_path += "import {}\n".format(unit_file.getRoot())
+
+        unit_file = self.parent.unit_file
+
+        # print("===>{}==>{}".format(unit_file.getModule(), unit_file.getRoot()))
+
+        # print(import_path)
+
+        exec_import_path += "\nreload({}.{})\n".format(
+            unit_file.getRoot(), unit_file.getModule())
+
+        code_str = import_path + exec_import_path + "\n"+func_body
+        func_body_format = (autopep8.fix_code(code_str))
+
+        # print(func_body_format)
+        codeObejct = compile(func_body_format, 'test', "exec")
+        Vars = {}
+        exec(codeObejct, globals(), Vars)
+        return Vars
+
     def getFuncAssertTest(self):
 
         try:
@@ -486,8 +526,6 @@ class NodeFunction(NodeClass):
             # print(list_param)
             func_body = None
             faker = Faker()
-
-            # print(self.getName())
 
             # if self.parent:
             #     print(self.getParentName())
@@ -515,6 +553,22 @@ class NodeFunction(NodeClass):
 
             body = func_body
             # print(isinstance(r_type, bool))
+
+            # print(func_body)
+
+            test_result = self.run_test(func_body)
+            # print(self.getParentName().lower())
+            # print(test_result)
+            # print(self.getName())
+            # print(test_result.get(self.getParentName().lower()))
+            # print(r_value.strip())
+            if r_value.strip() == "'}'" or r_value.strip() == "}":
+                # print(self.getName())
+                # print(test_result)
+                test_ret = test_result.get(self.getParentName().lower())
+                r_value = test_ret
+                if isinstance(test_ret, str):
+                    r_value = "'{}'".format(test_ret)
 
             if isinstance(r_type, bool):
                 if r_value == "True":
@@ -598,25 +652,23 @@ class NodeFunction(NodeClass):
                 return Templates.methodTest.format(
                     self.getName(), func_body, AssertUnitTestCase.assert_equal.format(value, r_value))
 
+            # print(self.getName())
             # print(type(r_type))
             if type(r_type) == type:
-                import_path = self.parent.import_path
-                import_path += " import "
 
-                # print("node module")
-                # print(self.parent.parent.node_module)
-                import_path += ",".join(self.parent.node_module)
-
-                # print(import_path)
-                code_str = import_path + "\n"+func_body
-                func_body_format = (autopep8.fix_code(code_str))
-                # print(func_body_format)
-                codeObejct = compile(func_body_format, 'test', "exec")
-                Vars = {}
-                exec(codeObejct, globals(), Vars)
+                Vars = self.run_test(func_body)
                 # print(Vars)
                 # print(self.getParentName().lower())
                 res_type = type(Vars.get(self.getParentName().lower()))
+
+                # print(Vars.get("pet_main"))
+                # print(self.getName())
+                # # print("{}".format(Vars.get(self.getParentName().lower())))
+                # print(r_value)
+
+                # if r_value.strip() == "'}'":
+                #     r_value = "'{}'".format(
+                #         Vars.get(self.method_initialization_name()))
 
                 if not isinstance(res_type, (str, int, bool)):
                     r_value = res_type.__name__
@@ -631,4 +683,7 @@ class NodeFunction(NodeClass):
             pass
 
         except ImportError:
+            pass
+
+        except AttributeError:
             pass
