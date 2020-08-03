@@ -29,6 +29,7 @@ Todos:
       ✔ ModuleNotFoundError @done(20-08-01 23:35)
       ☐ ImportError
       ☐ AttributeError
+      ☐ TypeError
       
     ✔ Allow the application to generate a unittest for a single file input not only a directory. @done(20-08-02 01:34)
 
@@ -45,6 +46,9 @@ Todos:
       ✔ There is a duplicate class generation when the file contains only a functions @done(20-08-01 01:42)
       ✔ Cannot get the class __init__ parameters @done(20-08-01 16:21)
       ☐ There are some issues with a simple function unitest generation , please fixe it.
+      ☐ When the user did not provide a parameter for a function or a method, the application will through a TypeError message
+        to be able to fix that , make sure to  check the method or function parameter using the the body of the node
+        
 
     
   

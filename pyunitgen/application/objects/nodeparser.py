@@ -563,7 +563,7 @@ class NodeFunction(NodeClass):
             # print(self.getName())
             # print(test_result.get(self.getParentName().lower()))
             # print(r_value.strip())
-            if r_value.strip() == "'}'" or r_value.strip() == "}":
+            if (r_value is not None) and (r_value.strip() == "'}'" or r_value.strip() == "}"):
                 # print(self.getName())
                 # print(test_result)
                 test_ret = test_result.get(self.getParentName().lower())
@@ -680,11 +680,14 @@ class NodeFunction(NodeClass):
                 return Templates.methodTest.format(
                     self.getName(), body, AssertUnitTestCase.assert_is_none.format(self.getParentName().lower()))
 
-        except ModuleNotFoundError:
-            pass
+        except ModuleNotFoundError as ex:
+            print(ex)
 
-        except ImportError:
-            pass
+        except ImportError as ex:
+            print(ex)
 
-        except AttributeError:
-            pass
+        except AttributeError as ex:
+            print(ex)
+
+        except Exception as ex:
+            print(ex)

@@ -1,11 +1,11 @@
 import setuptools
 
-with open("setup.md", "r") as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pyunitgen",  # Replace with your own username
-    version="0.0.1a",
+    version="0.0.2",
     author="Fangnikoue Evarist",
     author_email="malevae@gmail.com",
     description="A python unittest generator for all your python files.",
