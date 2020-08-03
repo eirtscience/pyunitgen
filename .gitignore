@@ -1,6 +1,8 @@
-tests/
 test_dir/
 sample/
 test/
 .env/
 .commit.todo
+vagrant/
+pyunitgen.egg-info/
+dist/

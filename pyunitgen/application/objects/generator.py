@@ -1,7 +1,7 @@
 
 from subprocess import call
 from os import path, makedirs
-from .GenerateUnitTests import main
+from .generateunittests import main
 
 
 class Generator:
