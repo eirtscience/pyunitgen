@@ -1,15 +1,11 @@
 import setuptools
 
-with open("READMESETUP.md", "r") as fh:
-    long_description = fh.read()
-
 setuptools.setup(
     name="pyunitgen",  # Replace with your own username
-    version="0.0.4",
+    version="0.0.1a3",
     author="Fangnikoue Evarist",
     author_email="malevae@gmail.com",
     description="A python unittest generator for all your python files.",
-    long_description=long_description,
     url="https://github.com/eirtscience/pyunitgen",
     packages=setuptools.find_packages(),
     classifiers=[

@@ -47,11 +47,11 @@ Some developers want to write the unittest code, but they lake time due to the d
 
 ## `Pyunitgen command line`
 ---
-  The below table describe the information needed by `pyunitgen` to run create the unittest data. The option unlosed with '`[]`' defined the optional option to provide to `pyunitgen`.
+  The below table describe the information needed by `pyunitgen` to create the unittest data. The option unlosed with '`[]`' defined the optional option to provide to `pyunitgen`.
 
   | **Option** | **Description** |**Default**|
   |:-----------|:------------------|:----------|
-  | `module`   | The module directory to use for the unittest compilation. This can be a single file as a directories of directories|
+  | `module`   | The module directory/fileto use for the unittest compilation. This can be a single file as a directories of directories|
   | `[-F]`  | File to use as a footer template.|
   |`[-H]`| File to use as a header template.|
   |`[-X]`| Add a child directory name to exclude.|
@@ -60,7 +60,7 @@ Some developers want to write the unittest code, but they lake time due to the d
   |`[-m]`|The path of the test module to generate.|test|
   |`[-p]`|The prefix for test files.|test_|
   |`[-t]`|The width of a tab in spaces (default actual tabs).|
-  |`[-nw]`|Tell `pyunitgen` to watch the module directory or file whenever the file has been modified.So it can modify the unittest file.|
+  |`[-nw]`|Tell `pyunitgen` to watch the module directory or file whenever the file has been modified.So it can modify the unittest file accordingly.|
   
 
 ## `Getting Start`
@@ -102,9 +102,7 @@ Some developers want to write the unittest code, but they lake time due to the d
         def test_unit_with_email(self, test1):
             '''
             @apiParam {String=Email} [test1]
-
             '''
-            pass
 
         def test_unit_with_default_test2_value_and_string(self, test1, test2):
             '''
@@ -112,7 +110,6 @@ Some developers want to write the unittest code, but they lake time due to the d
 
             @apiParam {String} test2="Another String parameter"
             '''
-            pass
 
         def test_unit_with_number_and_string(self, test1, test2):
             '''
@@ -120,7 +117,6 @@ Some developers want to write the unittest code, but they lake time due to the d
 
             @apiParam {Number} test2
             '''
-            pass
       ```
 
     - `Supported type`
@@ -152,6 +148,7 @@ Some developers want to write the unittest code, but they lake time due to the d
           {String=email}
          ```
 
+        More examples about the `@apiParam` can be found on the `@apiReturn` section.
 
 
   - `@apiReturn`
@@ -171,9 +168,9 @@ Some developers want to write the unittest code, but they lake time due to the d
 
     - `Example`
 
-        Create a folder called `sample` where all, the code will be located.
+        Create a folder called `sample` where all, the codes will be located.
 
-        Create a file called `pet_main.py` with the below content.
+        Create all the below files with their content.
 
         ```py
         #file: sample/animal.py
@@ -569,7 +566,6 @@ Some developers want to write the unittest code, but they lake time due to the d
 
                 @apiReturn {Boolean} [True]
                 '''
-                pass
 
             def test_unit_with_default_test2_value_and_string(self, test1, test2):
                 '''
@@ -579,7 +575,7 @@ Some developers want to write the unittest code, but they lake time due to the d
 
                 @apiReturn {Boolean} [True]
                 '''
-                pass
+
 
             def test_unit_with_number_and_string(self, test1, test2):
                 '''
@@ -589,7 +585,7 @@ Some developers want to write the unittest code, but they lake time due to the d
 
                 @apiReturn {Boolean} [True]
                 '''
-                pass
+
 
             def test_unit_with_address(self, address):
                 '''
@@ -597,7 +593,7 @@ Some developers want to write the unittest code, but they lake time due to the d
 
                 @apiReturn {Boolean} [True]
                 '''
-                pass
+
 
             def test_unit_with_boolean_and_string(self, test1, test2):
                 '''
@@ -607,26 +603,26 @@ Some developers want to write the unittest code, but they lake time due to the d
 
                 @apiReturn {Boolean} [True]
                 '''
-                pass
+
 
             def test_unit_that_return_a_list(self, test1, test2):
                 '''
                 @apiReturn {Number} [1,2,3,4]
                 '''
-                pass
+
 
             def test_unit_that_return_a_list_with_a_list_type(self, test1, test2):
                 '''
                 @apiReturn {List} [1,2,3,4]
                 '''
-                pass
+
 
             def test_unit_3(self, test1, test2):
                 '''
 
 
                 '''
-                pass
+
 
             def test_unit_4(self, test1, test2):
                 pass
@@ -742,3 +738,12 @@ Some developers want to write the unittest code, but they lake time due to the d
                   self.assertIsNone(anchorpeer_test_unit_4) 
               
           ```
+
+## `Note for the users`
+---
+
+- ### Add Description to the @api[Param|Return]
+
+    At this earlier stage of `pyunitgen`, we recommand the user to put the comment description on the next line when the `pyunitgen` annotation has been used.
+
+- 
