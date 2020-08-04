@@ -489,10 +489,9 @@ class NodeFunction(NodeClass):
         unit_file = self.parent.unit_file
         exec_import_path = "\nfrom importlib import reload\n"
 
-        #import_path += "import {}".format(self.parent.module_name)
+        # import_path += "import {}".format(self.parent.module_name)
         import_path = self.parent.import_path
         import_path += " import "
-
         # print("node module")
         # print(self.parent.parent.node_module)
         import_path += ",".join(self.parent.node_module)
@@ -505,8 +504,8 @@ class NodeFunction(NodeClass):
 
         # print(import_path)
 
-        exec_import_path += "\nreload({}.{})\n".format(
-            unit_file.getRoot(), unit_file.getModule())
+        exec_import_path += "\nreload({})\n".format(
+            unit_file.getReloadPath())
 
         code_str = import_path + exec_import_path + "\n"+func_body
         func_body_format = (autopep8.fix_code(code_str))

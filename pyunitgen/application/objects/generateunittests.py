@@ -37,6 +37,14 @@ sys.path.insert(0, _parentDir)
 
 def generate_unittest(root, fileName, arguments, footer, header):
 
+    rootInit = os.path.join(root, '__init__.py')
+
+    # print(rootInit)
+
+    if not os.path.exists(rootInit):
+        with open(rootInit, "w") as rootInitFile:
+            rootInitFile.write('')
+
     unitTest = Generator.generateUnitTest(
         root, fileName, arguments.internal)
 

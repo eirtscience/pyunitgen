@@ -16,7 +16,14 @@ class PyUnitFile:
         return self.module
 
     def getRoot(self):
+        if len(self.root) == 0:
+            return self.module
         return self.root.strip("/")
+
+    def getReloadPath(self):
+        if len(self.root) > 0:
+            return "{}.{}".format(self.getRoot(), self.getModule())
+        return self.getModule()
 
     def getPath(self):
         # print(self.path.replace("/", ".").rstrip(".py"))

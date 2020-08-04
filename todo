@@ -36,8 +36,8 @@ Todos:
     ✔ When the watching folder has been changes, instead of recompiling all the files one by one ,track the file that has been change and only generate the unittest code for it. @done(20-08-03 07:57)
 
     When generating a unittest for the provide module folder:
-      ☐ Check if that folder contain a __init__.py file
-      ☐ If not created.
+      ✔ Check if that folder contain a __init__.py file @done(20-08-04 08:18)
+      ✔ If not created. @done(20-08-04 08:18)
 
     ☐ Add a handler whenerver the application find 'apiParam' replace by the current function/method parameter
       
@@ -46,8 +46,7 @@ Todos:
       ✔ There is a duplicate class generation when the file contains only a functions @done(20-08-01 01:42)
       ✔ Cannot get the class __init__ parameters @done(20-08-01 16:21)
       ☐ There are some issues with a simple function unitest generation , please fixe it.
-      ☐ When the user did not provide a parameter for a function or a method, the application will through a TypeError message
-        to be able to fix that , make sure to  check the method or function parameter using the the body of the node
+      ☐ When the user did not provide a parameter for a function or a method, the application will through a TypeError message to be able to fix that , make sure to  check the method or function parameter using the the body of the node
         
 
     

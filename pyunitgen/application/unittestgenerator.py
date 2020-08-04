@@ -64,7 +64,10 @@ def watch(argument):
 
     if path.isfile(argument.module):
         filename = path.basename(argument.module)
-        path_dir = path.dirname(argument.module) + "/"
+        path_dir = path.dirname(argument.module)
+        if len(path_dir) > 0:
+            path_dir += "/"
+        # print(path_dir)
         list_of_changed_file[path_dir] = []
         list_of_changed_file[path_dir].append(filename)
         argument.module = list_of_changed_file
